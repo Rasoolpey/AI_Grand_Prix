@@ -19,11 +19,16 @@ codegen/
 # MATLAB figure exports (keep source, not output dumps)
 *.fig
 
-# Binary track files are committed intentionally — do NOT ignore tracks/
-# (tracks/*.mat are part of the project)
+# Practice track is committed (regenerated automatically, but saves startup time)
+# Mystery track is INSTRUCTOR ONLY — never commit it to the public repo
+tracks/mysteryTrack.mat
 
-# Submission folder — student submissions are collected separately
-submissions/
+# Generated .mat files in root (if any)
+*.mat
+!tracks/practiceTrack.mat
+
+# Submission folders — collected by instructor separately, not in main repo
+submissions/*/
 
 # Python virtual environments (for MCP server)
 .venv/
@@ -48,3 +53,6 @@ desktop.ini
 
 # Environment / credentials — NEVER commit these
 .env
+
+# Instructor reference PDFs / docs (not for student repo)
+Documents/

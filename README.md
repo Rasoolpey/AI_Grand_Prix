@@ -71,11 +71,27 @@ Run `testMCP` in MATLAB, or ask your agent to run it for you.
 
 ### Step 4 — Start your first race
 ```matlab
+% With visualisation (watch the car drive):
 practiceRace
+
+% Headless (faster — use this when iterating quickly):
+practiceRace('Headless', true)
+
+% Save results and diagnose:
+r = practiceRace('Headless', true);
+plotLap(r)
 ```
 
-### Step 5 — Build something great
+### Step 5 — Read the diagnostics
+`plotLap` generates 4 panels your agent should analyse:
+- **Trajectory** — is the car staying on track? cutting corners?
+- **Speed profile** — where is it fast/slow relative to the track?
+- **Steering angle** — is it oscillating? saturating at ±0.5 rad?
+- **Cross-track error** — how far is it from the centreline?
+
+### Step 6 — Build something great
 Open `student/controller.m` and start working with your agent.
+Read [AGENT_GUIDE.md](AGENT_GUIDE.md) for prompt templates that get results.
 
 ---
 
