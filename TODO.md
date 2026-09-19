@@ -4,6 +4,38 @@ Based on [AI_Grand_Prix_Workshop_Plan.md](file:///c:/Users/em18736/Documents/Mat
 
 ---
 
+## 🔧 Phase 0 — Agent Setup & Documentation
+> Goal: Every student can reproduce the exact same agent+MATLAB environment by following the repo docs.
+> ✅ **Complete** — committed and pushed to [github.com/Rasoolpey/AI_Grand_Prix](https://github.com/Rasoolpey/AI_Grand_Prix)
+
+- [x] Create repo structure and initialise Git (`main` branch)
+- [x] Add `.gitignore` (MATLAB temps, Python venvs, OS files)
+- [x] Add `.gitattributes` (normalise line endings for Windows/Mac teams)
+- [x] Write `README.md` — top-level intro, project structure, scoring table, controller interface quick-ref
+- [x] Write `SETUP.md` — complete pre-workshop setup guide
+  - [x] MATLAB version requirement (R2024a+)
+  - [x] Python 3.11/3.12 install instructions
+  - [x] MATLAB MCP server install (`github.com/matlab/matlab-mcp-server`)
+  - [x] Claude Desktop install and `claude_desktop_config.json` configuration
+  - [x] Troubleshooting section (firewall, PowerShell permissions, path errors)
+  - [x] Alternative agents: Cursor, Antigravity/Gemini
+  - [x] Pre-workshop checklist for students
+- [x] Write `AGENT_GUIDE.md` — prompt engineering cheat-sheet
+  - [x] The golden rule: agent reads before it writes
+  - [x] The agentic engineering loop (Specify → Inspect → Implement → Run → Observe → Diagnose → Improve)
+  - [x] 8 prompt patterns (understand, investigate, implement, diagnose, improve speed, check generalisation, diagnostic analysis, final validation)
+  - [x] Anti-patterns section
+- [x] Create `mcp/` folder
+  - [x] `mcp/README.md` — plain-English MCP explainer
+  - [x] `mcp/claude_desktop_config.json` — drop-in template (3 paths to fill in)
+  - [x] `mcp/cursor_mcp.json` — alternative config for Cursor IDE
+  - [x] `mcp/test_mcp.m` — sanity-check script
+- [x] Create `student/controller.m` — baseline Pure Pursuit controller with full `obs` struct docs
+- [x] Create `student/robotConfig.m` — tuning hyperparameters with clear documentation
+- [x] Push Phase 0 to GitHub (`github.com/Rasoolpey/AI_Grand_Prix`)
+
+---
+
 ## 🧰 Phase 1 — Single-Car Local Simulator
 > Goal: `practiceRace` runs a car around one track.
 
@@ -81,40 +113,46 @@ Based on [AI_Grand_Prix_Workshop_Plan.md](file:///c:/Users/em18736/Documents/Mat
 ## 📦 Phase 5 — Student Project Package
 > Goal: A clean, self-contained project students receive on the day.
 
-- [ ] Finalise project folder structure:
+- [/] Finalise project folder structure: *(Phase 0 scaffold done; simulator files pending Phase 1)*
   ```text
   AI_Grand_Prix/
-  ├── practiceRace.m         # Local runner (interactive or headless)
-  ├── plotLap.m              # Visual diagnostics for agent & student
-  ├── joinRace.m             # Connect to championship server (Phase 7)
-  ├── testMCP.m              # Sanity check for agent-MATLAB connection
-  ├── README.md              # Student instructions
+  ├── practiceRace.m         # [ ] Phase 1
+  ├── plotLap.m              # [ ] Phase 1
+  ├── joinRace.m             # [ ] Phase 7
+  ├── README.md              # [x] Done
+  ├── SETUP.md               # [x] Done
+  ├── AGENT_GUIDE.md         # [x] Done
   ├── student/
-  │   ├── controller.m       ← MAIN FILE TO MODIFY
-  │   └── robotConfig.m      # Hyperparameter tuning
-  ├── simulator/             ← DO NOT MODIFY
+  │   ├── controller.m       # [x] Done (baseline Pure Pursuit + full obs docs)
+  │   └── robotConfig.m      # [x] Done
+  ├── mcp/                   # [x] Done
+  │   ├── README.md
+  │   ├── claude_desktop_config.json
+  │   ├── cursor_mcp.json
+  │   └── test_mcp.m
+  ├── simulator/             # [ ] Phase 1 — DO NOT MODIFY
   │   ├── Vehicle.m
   │   ├── Track.m
   │   ├── RaceSimulation.m
   │   └── Visualizer.m
   └── tracks/
-      └── practiceTrack.mat
+      └── practiceTrack.mat  # [ ] Phase 1
   ```
-- [ ] Write `README.md` for students
-  - [ ] Project overview & challenge mission
-  - [ ] How to run `practiceRace` (normal and headless mode)
-  - [ ] How to run `plotLap` for diagnostic graphs
-  - [ ] Explanation of `obs` fields and `command` outputs
-  - [ ] Example agent prompts (from §26 of the plan)
-  - [ ] Scoring explanation & penalty rules
+- [x] Write `README.md` for students
+  - [x] Project overview & challenge mission
+  - [ ] How to run `practiceRace` (normal and headless mode) — *needs Phase 1*
+  - [ ] How to run `plotLap` for diagnostic graphs — *needs Phase 1*
+  - [x] Explanation of `obs` fields and `command` outputs
+  - [x] Example agent prompts (from §26 of the plan) — *see AGENT_GUIDE.md*
+  - [x] Scoring explanation & penalty rules
   - [ ] Code-freeze & submission instructions
-- [ ] Create MCP configuration templates & setup guides
-  - [ ] Provide sample config files for target environments (Claude Desktop, Cursor, Antigravity/Gemini, VS Code Roo Code)
-  - [ ] Include `testMCP.m` script to verify tool-calling / execution works smoothly
+- [x] Create MCP configuration templates & setup guides
+  - [x] Provide sample config files for target environments (Claude Desktop, Cursor, Antigravity/Gemini, VS Code Roo Code)
+  - [x] Include `testMCP.m` script to verify tool-calling / execution works smoothly
 - [ ] Write printed student instruction sheet (§25 wording)
-- [ ] Create example prompt cheat-sheet (§26) for students
-- [ ] Mark simulator folder as **DO NOT MODIFY** (comments + README warning)
-- [ ] Write pre-workshop setup guide (MATLAB version, toolboxes, MCP setup, agent setup, firewall)
+- [x] Create example prompt cheat-sheet (§26) for students — *see AGENT_GUIDE.md*
+- [ ] Mark simulator folder as **DO NOT MODIFY** (comments + README warning) — *Phase 1*
+- [x] Write pre-workshop setup guide (MATLAB version, toolboxes, MCP setup, agent setup, firewall) — *see SETUP.md*
 
 ---
 
