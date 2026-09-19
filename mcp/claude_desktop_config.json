@@ -1,0 +1,27 @@
+{
+  "_comment": "AI Grand Prix Workshop — Claude Desktop MCP Configuration",
+  "_instructions": [
+    "1. Copy this file's content into: %APPDATA%\\Claude\\claude_desktop_config.json (Windows)",
+    "   OR ~/Library/Application Support/Claude/claude_desktop_config.json (Mac)",
+    "2. Update the three paths marked with <REPLACE_THIS> below",
+    "3. Fully quit and restart Claude Desktop after saving",
+    "4. Open Claude Desktop and ask it to run testMCP.m to verify"
+  ],
+  "mcpServers": {
+    "matlab": {
+      "command": "<REPLACE_THIS: full path to python in your MCP server venv>",
+      "_windows_example_command": "C:\\Tools\\matlab-mcp-server\\.venv\\Scripts\\python.exe",
+      "_mac_example_command": "/Users/yourname/Tools/matlab-mcp-server/.venv/bin/python",
+      "args": [
+        "<REPLACE_THIS: full path to server.py in your cloned matlab-mcp-server folder>"
+      ],
+      "_windows_example_args": ["C:\\Tools\\matlab-mcp-server\\matlab_mcp\\server.py"],
+      "_mac_example_args": ["/Users/yourname/Tools/matlab-mcp-server/matlab_mcp/server.py"],
+      "env": {
+        "MATLAB_PATH": "<REPLACE_THIS: path to your MATLAB installation root>",
+        "_windows_example_MATLAB_PATH": "C:\\Program Files\\MATLAB\\R2024a",
+        "_mac_example_MATLAB_PATH": "/Applications/MATLAB_R2024a.app"
+      }
+    }
+  }
+}

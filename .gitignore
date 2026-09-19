@@ -1,0 +1,50 @@
+# ============================================================
+# AI Grand Prix Workshop — .gitignore
+# ============================================================
+
+# MATLAB auto-save / backup files
+*.asv
+*.m~
+
+# MATLAB compiled outputs
+*.mex*
+*.mexa64
+*.mexmaci64
+*.mexw64
+
+# Simulink generated code
+slprj/
+codegen/
+
+# MATLAB figure exports (keep source, not output dumps)
+*.fig
+
+# Binary track files are committed intentionally — do NOT ignore tracks/
+# (tracks/*.mat are part of the project)
+
+# Submission folder — student submissions are collected separately
+submissions/
+
+# Python virtual environments (for MCP server)
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Log and temporary files
+*.log
+*.tmp
+
+# Environment / credentials — NEVER commit these
+.env

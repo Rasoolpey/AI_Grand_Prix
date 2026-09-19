@@ -1,0 +1,22 @@
+{
+  "_comment": "AI Grand Prix Workshop — Cursor IDE MCP Configuration",
+  "_instructions": [
+    "1. In Cursor: go to Settings → MCP → Add new MCP server",
+    "2. Or add this to your Cursor settings.json under the 'mcp' key",
+    "3. Update all paths marked <REPLACE_THIS> below",
+    "See SETUP.md for full instructions"
+  ],
+  "matlab": {
+    "command": "<REPLACE_THIS: full path to python in your MCP server venv>",
+    "_windows_example": "C:\\Tools\\matlab-mcp-server\\.venv\\Scripts\\python.exe",
+    "_mac_example": "/Users/yourname/Tools/matlab-mcp-server/.venv/bin/python",
+    "args": [
+      "<REPLACE_THIS: full path to server.py>"
+    ],
+    "env": {
+      "MATLAB_PATH": "<REPLACE_THIS: MATLAB installation root>",
+      "_windows_example": "C:\\Program Files\\MATLAB\\R2024a",
+      "_mac_example": "/Applications/MATLAB_R2024a.app"
+    }
+  }
+}
