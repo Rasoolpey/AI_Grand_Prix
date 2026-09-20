@@ -28,7 +28,8 @@ function config = robotConfig()
 
     % Target speed (m/s)   — Maximum allowed by physics: 10 m/s
     % Start conservative!  Reliability matters more than speed.
-    config.targetSpeed = 3.5;
+    config.targetSpeed = 4.5;
+
 
     % Proportional steering gain
     % Multiplies heading error → steering command.

@@ -40,8 +40,9 @@ function results = practiceRace(varargin)
     % ------------------------------------------------------------------ %
     p = inputParser();
     p.addParameter('Headless', false, @(x) islogical(x) || isnumeric(x));
-    p.addParameter('MaxTime',  120,   @isnumeric);
+    p.addParameter('MaxTime',  180,   @isnumeric);
     p.addParameter('DT',       0.02,  @isnumeric);
+
     p.parse(varargin{:});
     opts = p.Results;
     opts.Headless = logical(opts.Headless);
