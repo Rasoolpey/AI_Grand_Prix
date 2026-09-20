@@ -25,31 +25,39 @@ function trackData = createPracticeTrack()
     % ------------------------------------------------------------------
     %  Circuit waypoints  [x, y]  (metres)
     %
-    %  Trace the CENTRELINE clockwise from the start/finish line.
-    %  Adjust these to reshape the circuit layout.
+    %  ALL points must have y ≤ 0 so the track never crosses the
+    %  start/finish straight (which runs along y ≈ 0, heading East).
+    %
+    %  Trace the CENTRELINE clockwise:
+    %    → East along SF straight
+    %    → South-east through T1 sweeper
+    %    → South through S-curves and chicane
+    %    → South-west to hairpin
+    %    → North-west return section
+    %    → East back to SF line  (staying at y ≤ 0 throughout)
     % ------------------------------------------------------------------
     W = [
           0,     0;   % P01  Start/Finish line
-         42,    -1;   % P02  SF straight
-         80,    -8;   % P03  T1 braking zone
-        105,   -28;   % P04  T1 apex  (sweeping right)
-        112,   -55;   % P05  T1 exit
-         98,   -78;   % P06  T2 apex  (left S-curve)
-         75,   -90;   % P07  T3 entry (right S-curve)
-         50,  -100;   % P08  T3 apex
-         28,   -90;   % P09  T4 chicane left apex
-         10,  -102;   % P10  T5 chicane right apex
-         -8,   -90;   % P11  T5 exit
-        -25,   -65;   % P12  T6 approach (back straight)
-        -30,   -40;   % P13  T6 mid
-        -30,   -12;   % P14  T6 hairpin apex
-        -22,    10;   % P15  T6 exit (now heading NE)
-          5,    22;   % P16  T7 sweeping right
-         30,    18;   % P17  T8 sweep into final sector
-         40,     8;   % P18  T9 esses entry
-         20,    -2;   % P19  T10 esses right
-          0,     0;   % P20  close (= P01)
+          8,    -1;   % P02  SF departure guide (force spline below y=0)
+         52,    -3;   % P03  SF straight
+         88,   -12;   % P04  T1 braking zone
+        110,   -32;   % P05  T1 apex  (sweeping right)
+        115,   -60;   % P06  T1 exit
+         98,   -82;   % P07  T2 apex  (S-curve left)
+         74,   -96;   % P08  T3 apex  (S-curve right)
+         50,  -108;   % P09  T4 chicane left apex
+         26,   -96;   % P10  T5 chicane right apex
+          5,  -112;   % P11  back straight entry
+        -18,  -100;   % P12  back straight
+        -36,   -75;   % P13  hairpin approach
+        -44,   -50;   % P14  hairpin entry
+        -40,   -26;   % P15  hairpin apex (furthest NW)
+        -26,   -13;   % P16  hairpin exit
+        -10,    -5;   % P17  return sweep
+         -2,    -1;   % P18  final approach to SF
+          0,     0;   % P19  close (= P01)
     ];
+
 
     % ------------------------------------------------------------------
     %  Fit periodic spline through waypoints
