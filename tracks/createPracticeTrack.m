@@ -25,37 +25,41 @@ function trackData = createPracticeTrack()
     % ------------------------------------------------------------------
     %  Circuit waypoints  [x, y]  (metres)
     %
-    %  ALL points must have y ≤ 0 so the track never crosses the
-    %  start/finish straight (which runs along y ≈ 0, heading East).
+    %  "Club Circuit" — COTA-inspired layout:
+    %    ① Long SF straight (East)
+    %    ② T1: sweeping right
+    %    ③ T2-T9: 8-corner S-curve complex (like COTA Esses)
+    %    ④ T10: tight right chicane
+    %    ⑤ Back straight (West)
+    %    ⑥ T11: hairpin (apex at far left)
+    %    ⑦ Return: sweeping north back to SF
     %
-    %  Trace the CENTRELINE clockwise:
-    %    → East along SF straight
-    %    → South-east through T1 sweeper
-    %    → South through S-curves and chicane
-    %    → South-west to hairpin
-    %    → North-west return section
-    %    → East back to SF line  (staying at y ≤ 0 throughout)
+    %  ALL y ≤ 0: track stays south of SF straight (no self-intersections).
     % ------------------------------------------------------------------
     W = [
-          0,     0;   % P01  Start/Finish line
-          8,    -1;   % P02  SF departure guide (force spline below y=0)
-         52,    -3;   % P03  SF straight
-         88,   -12;   % P04  T1 braking zone
-        110,   -32;   % P05  T1 apex  (sweeping right)
-        115,   -60;   % P06  T1 exit
-         98,   -82;   % P07  T2 apex  (S-curve left)
-         74,   -96;   % P08  T3 apex  (S-curve right)
-         50,  -108;   % P09  T4 chicane left apex
-         26,   -96;   % P10  T5 chicane right apex
-          5,  -112;   % P11  back straight entry
-        -18,  -100;   % P12  back straight
-        -36,   -75;   % P13  hairpin approach
-        -44,   -50;   % P14  hairpin entry
-        -40,   -26;   % P15  hairpin apex (furthest NW)
-        -26,   -13;   % P16  hairpin exit
-        -10,    -5;   % P17  return sweep
-         -2,    -1;   % P18  final approach to SF
-          0,     0;   % P19  close (= P01)
+          0,    0;   % P01  Start/Finish line
+          8,   -1;   % P02  SF guide (push spline south immediately)
+         60,   -3;   % P03  SF straight
+         92,  -12;   % P04  T1 braking zone
+        115,  -35;   % P05  T1 apex  (sweeping right)
+        118,  -62;   % P06  T2 entry (S-curve start)
+        105,  -80;   % P07  T2 apex  (left)
+         82,  -88;   % P08  T3 apex  (right)
+         68, -100;   % P09  T4 apex  (left)
+         48,  -92;   % P10  T5 apex  (right)
+         32, -105;   % P11  T6 apex  (left)
+         14,  -95;   % P12  T7 apex  (right)
+         -2, -110;   % P13  T8 apex  (left)
+        -18,  -98;   % P14  T9 apex  (right)
+        -32, -112;   % P15  T10 chicane (left — furthest south)
+        -44,  -98;   % P16  T10 exit
+        -38,  -75;   % P17  T11 hairpin approach
+        -45,  -52;   % P18  T11 entry
+        -48,  -30;   % P19  T11 apex  (furthest NW — actual hairpin)
+        -36,  -15;   % P20  T11 exit
+        -18,   -7;   % P21  return sweep
+         -3,   -1;   % P22  final approach to SF
+          0,    0;   % P23  close
     ];
 
 

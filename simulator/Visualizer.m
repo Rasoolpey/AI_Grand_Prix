@@ -146,10 +146,11 @@ classdef Visualizer < handle
             cosH = cos(h);  sinH = sin(h);
 
             % Rotate & translate each car part
-            Visualizer.movePatch(obj.carBody,  Visualizer.carBodyPts(), x, y, cosH, sinH);
-            Visualizer.movePatch(obj.carFWing, Visualizer.fwingPts(),   x, y, cosH, sinH);
-            Visualizer.movePatch(obj.carRWing, Visualizer.rwingPts(),   x, y, cosH, sinH);
-            Visualizer.movePatch(obj.carNose,  Visualizer.nosePts(),    x, y, cosH, sinH);
+            % NOTE: must unpack [bx,by] first — MATLAB drops 2nd return value inline
+            [bx, by] = Visualizer.carBodyPts();  Visualizer.movePatch(obj.carBody,  bx, by, x, y, cosH, sinH);
+            [fx, fy] = Visualizer.fwingPts();    Visualizer.movePatch(obj.carFWing, fx, fy, x, y, cosH, sinH);
+            [rx, ry] = Visualizer.rwingPts();    Visualizer.movePatch(obj.carRWing, rx, ry, x, y, cosH, sinH);
+            [nx, ny] = Visualizer.nosePts();     Visualizer.movePatch(obj.carNose,  nx, ny, x, y, cosH, sinH);
 
             % Heading arrow
             aLen = 4.0;
