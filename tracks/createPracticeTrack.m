@@ -45,15 +45,24 @@ function trackData = createPracticeTrack()
     pts(end+1, :) = pts(1, :);
 
     % ------------------------------------------------------------------
+    % Remove consecutive near-duplicate points
+    % (the circuit closes geometrically, so the last arc point lands
+    %  very close to pts(1,:) — this avoids zero-length segments that
+    %  cause cumD to have duplicate values and interp1 to error.)
+    % ------------------------------------------------------------------
+    segD = sqrt(sum(diff(pts, 1, 1).^2, 2));
+    keep = [true; segD > 1e-9];
+    pts  = pts(keep, :);
+
+    % ------------------------------------------------------------------
     % Smooth and resample to uniform spacing
     % ------------------------------------------------------------------
     diffs   = diff(pts, 1, 1);
     segLens = sqrt(sum(diffs.^2, 2));
     cumD    = [0; cumsum(segLens)];
-    totalL  = cumD(end);
 
-    nFinal  = round(totalL / res);
-    sUnif   = linspace(0, cumD(end-1), nFinal)';   % don't include closing point twice
+    nFinal  = round(cumD(end) / res);
+    sUnif   = linspace(0, cumD(end-1), nFinal)';   % don't double-count closing point
 
     cx = interp1(cumD, pts(:,1), sUnif, 'pchip');
     cy = interp1(cumD, pts(:,2), sUnif, 'pchip');

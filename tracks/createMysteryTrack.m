@@ -47,6 +47,11 @@ function trackData = createMysteryTrack()
     % Close loop
     pts(end+1, :) = pts(1, :);
 
+    % Remove consecutive near-duplicate points (same root cause as practiceTrack)
+    segD = sqrt(sum(diff(pts, 1, 1).^2, 2));
+    keep = [true; segD > 1e-9];
+    pts  = pts(keep, :);
+
     % Smooth / resample
     diffs   = diff(pts, 1, 1);
     segLens = sqrt(sum(diffs.^2, 2));
@@ -58,6 +63,7 @@ function trackData = createMysteryTrack()
     cx = interp1(cumD, pts(:,1), sUnif, 'pchip');
     cy = interp1(cumD, pts(:,2), sUnif, 'pchip');
     centreline = [cx, cy];
+
 
     N    = size(centreline, 1);
     next = mod((1:N)', N) + 1;
