@@ -27,7 +27,7 @@ You receive a working MATLAB simulator and a baseline controller that drives the
 ```
 AI_Grand_Prix/
 ├── README.md               ← You are here
-├── SETUP.md                ← Start here BEFORE the workshop
+├── AGENTS.md               ← Rules your AI agent follows (read automatically)
 ├── AGENT_GUIDE.md          ← How to talk to your AI agent effectively
 │
 ├── practiceRace.m          ← Run a local practice race
@@ -44,24 +44,17 @@ AI_Grand_Prix/
 │   ├── RaceSimulation.m
 │   └── Visualizer.m
 │
-├── tracks/
-│   └── practiceTrack.mat   ← Practice track (mystery track revealed at end)
-│
-└── mcp/
-    ├── README.md            ← What MCP is and why you need it
-    ├── claude_desktop_config.json
-    ├── cursor_mcp.json
-    └── test_mcp.m
+└── tracks/
+    └── createPracticeTrack.m  ← Practice track (the final track is revealed on the day)
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### Step 1 — Set up your environment (before the workshop)
-Follow the complete setup guide: **[SETUP.md](SETUP.md)**
-
-This covers MATLAB, the MATLAB MCP server, and Claude Desktop configuration.
+### Step 1 — Set up your environment
+Follow the workshop guide (`AI_Workshop\README.md`). One command installs everything, including the MATLAB MCP server
+that lets your agent in Antigravity run MATLAB. Then open **this folder** in Antigravity.
 
 ### Step 2 — Learn to prompt effectively
 Read **[AGENT_GUIDE.md](AGENT_GUIDE.md)** for the prompt cheat-sheet.

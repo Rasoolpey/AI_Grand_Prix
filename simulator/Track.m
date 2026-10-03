@@ -9,7 +9,7 @@ classdef Track
 %   Provides spatial queries used by RaceSimulation and plotLap.
 %
 %   Construction:
-%     trackData = createPracticeTrack();   % or createMysteryTrack()
+%     trackData = createPracticeTrack();
 %     track     = Track(trackData);
 %
 %   Key methods:
@@ -43,7 +43,7 @@ classdef Track
         % TRACK(trackData)  Construct from a track data struct.
         %
         %   trackData: struct produced by createPracticeTrack() or
-        %              createMysteryTrack().  Required fields:
+        %              the instructor's final-track generator.  Required fields:
         %     .centreline, .width, .normals, .leftBoundary,
         %     .rightBoundary, .cumDist, .lapLength,
         %     .startFinishLine, .startFinishIdx

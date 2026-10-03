@@ -21,7 +21,7 @@
 %     All checks passed. You are ready to race!
 %
 %   If any line shows [!!], fix that issue before starting the workshop.
-%   See SETUP.md for troubleshooting help.
+%   See AI_Workshop\README.md (Help section) for troubleshooting.
 %
 % =========================================================================
 
@@ -83,6 +83,6 @@ if allGood
     fprintf('  All checks passed. You are ready to race!\n');
     fprintf('  Next step: Ask your agent to run practiceRace\n');
 else
-    fprintf('  One or more checks failed. See SETUP.md.\n');
+    fprintf('  One or more checks failed. See AI_Workshop\\README.md (Help).\n');
 end
 fprintf('=============================================\n\n');
