@@ -1,0 +1,1 @@
+Figures for your proposal go here (PNG, SVG or PDF), made from the "Figure brief" in proposal.md.

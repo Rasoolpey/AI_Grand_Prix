@@ -1,0 +1,6 @@
+Put the PDFs you downloaded (through the library) in this folder.
+
+Name each file:  <rank>_<first-author>_<year>.pdf
+Example:         03_Kabzan_2019.pdf
+
+The rank is the number in 2_search/papers.csv.

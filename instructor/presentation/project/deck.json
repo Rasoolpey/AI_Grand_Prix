@@ -1,0 +1,29 @@
+{
+  "v": 4,
+  "createdOnFiles": { "v": 1, "at": "2026-10-03T02:00:00Z" },
+  "lists": "css",
+  "title": "AI Workshop",
+  "order": [
+    "cover", "agenda", "status",
+    "vocab-words", "vocab-stack", "vocab-files",
+    "setup", "keys",
+    "p1-divider", "p1-topics", "p1-pool", "p1-draw", "p1-workspace", "p1-pipeline", "p1-grill", "p1-search", "p1-review", "p1-proposal", "p1-rules", "p1-outputs",
+    "break",
+    "p2-divider", "p2-mission", "p2-design", "p2-paths", "p2-scoring", "p2-loop", "p2-raceday",
+    "wrap", "open-decisions"
+  ],
+  "sections": {
+    "s-open":  { "description": "Opening: what the day looks like and where the preparation stands.", "start": "cover" },
+    "s-vocab": { "description": "The vocabulary of AI tools: model, agent, harness, tool, MCP, skill, rules, subagent.", "start": "vocab-words" },
+    "s-setup": { "description": "One command sets up everything in one clean folder.", "start": "setup" },
+    "s-p1":    { "description": "Part 1: from a research topic to a literature review and a proposal with an AI agent.", "start": "p1-divider" },
+    "s-break": { "description": "Break.", "start": "break" },
+    "s-p2":    { "description": "Part 2: the AI Grand Prix, a car-and-controller design challenge (draft).", "start": "p2-divider" },
+    "s-close": { "description": "What students leave with, and the decisions still open.", "start": "wrap" }
+  },
+  "faces": {
+    "space-grotesk": { "family": "Space Grotesk", "href": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&display=swap" },
+    "ibm-plex-sans": { "family": "IBM Plex Sans", "href": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" },
+    "jetbrains-mono": { "family": "JetBrains Mono", "href": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" }
+  }
+}

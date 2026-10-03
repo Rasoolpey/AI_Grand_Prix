@@ -1,0 +1,2 @@
+The agent saves the text of each PDF here (one .md file per PDF), using the MarkItDown tool.
+You don't need to do anything in this folder.

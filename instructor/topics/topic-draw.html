@@ -1,0 +1,433 @@
+<title>Topic Draw</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a control bar with the Draw button, then two panes (sign-up list | topic pool), results below.
+   During the draw a full-screen stage reveals one name and topic at a time for the projector.
+   Deliberately single-theme (dark), matching the workshop deck and readable on a projector. */
+:root {
+  --bg: #0F1A2F;
+  --panel: #16233D;
+  --raise: #1D2D4C;
+  --line: #2C3D60;
+  --fg: #F2F0EA;
+  --muted: #A6B2C7;
+  --pool: #3FB8A6;
+  --own: #FF8A3D;
+  --on-accent: #0F1A2F;
+  --warn: #FFC857;
+  --display: 'Space Grotesk', 'Segoe UI', Arial, sans-serif;
+  --body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+  --mono: 'IBM Plex Mono', Consolas, 'Courier New', monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 24px; padding-block: 24px 48px; display: flex; flex-direction: column; gap: 24px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+p { margin: 0; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+
+/* top bar */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; justify-content: space-between; }
+.brand { display: flex; flex-direction: column; gap: 2px; }
+.eyebrow { font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.brand h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 700; }
+.stats { display: flex; gap: 20px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.stat { display: flex; flex-direction: column; }
+.stat b { font-family: var(--display); font-size: 28px; line-height: 1.1; }
+.stat span { font-size: 13px; color: var(--muted); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { border: 1px solid var(--line); background: var(--raise); padding: 10px 16px; border-radius: 10px; font-weight: 600; }
+.btn:hover:not(:disabled) { border-color: var(--muted); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.primary { background: var(--own); color: var(--on-accent); border-color: var(--own); font-family: var(--display); font-size: 18px; padding: 12px 22px; }
+.btn.armed { background: var(--warn); color: var(--on-accent); border-color: var(--warn); }
+.note { font-size: 14px; color: var(--muted); }
+.banner { border: 1px solid var(--warn); color: var(--warn); padding: 10px 14px; border-radius: 10px; font-size: 14px; }
+
+/* panes */
+.panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .panes { grid-template-columns: minmax(0, 1fr); } }
+.pane { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.pane-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.pane-head h2 { font-size: 22px; }
+
+form { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > * { min-width: 0; }
+input[type="text"], textarea { flex: 1 1 220px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+textarea { min-height: 96px; resize: vertical; width: 100%; }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.8; }
+.choice { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.choice label { padding: 9px 14px; cursor: pointer; font-weight: 600; font-size: 15px; }
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.choice input:checked + span { color: var(--on-accent); }
+.choice label:has(input[value="pool"]:checked) { background: var(--pool); color: var(--on-accent); }
+.choice label:has(input[value="own"]:checked) { background: var(--own); color: var(--on-accent); }
+.choice label:has(input:focus-visible) { outline: 3px solid var(--warn); outline-offset: -3px; }
+.linkish { background: none; border: none; color: var(--muted); text-decoration: underline; padding: 0; font-size: 14px; align-self: flex-start; }
+
+ul.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+ul.list li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 2px; border-top: 1px solid var(--line); }
+ul.list li:first-child { border-top: none; }
+.chip { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 999px; color: var(--on-accent); font-weight: 500; text-align: center; min-width: 52px; }
+.chip.pool { background: var(--pool); }
+.chip.own { background: var(--own); }
+.who { min-width: 0; display: flex; flex-direction: column; }
+.who b { font-weight: 600; overflow-wrap: anywhere; }
+.who small { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.x { background: none; border: 1px solid transparent; color: var(--muted); border-radius: 8px; padding: 4px 9px; font-size: 14px; }
+.x:hover { border-color: var(--line); color: var(--fg); }
+.x.armed { border-color: var(--warn); color: var(--warn); }
+.num { font-family: var(--mono); color: var(--pool); font-size: 14px; min-width: 28px; font-variant-numeric: tabular-nums; }
+.taken .who b { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+.empty { color: var(--muted); font-size: 15px; padding: 8px 0; }
+
+/* results */
+.results table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.results th, .results td { text-align: left; padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+.results th { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border-top: none; }
+.results td:first-child { font-weight: 600; }
+.tablewrap { overflow-x: auto; }
+.seed { font-family: var(--mono); color: var(--muted); font-size: 14px; }
+
+/* reveal stage */
+.stage { position: fixed; inset: 0; background: var(--bg); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 24px; text-align: center; }
+.stage .count { font-family: var(--mono); color: var(--muted); font-size: 18px; letter-spacing: 0.1em; }
+.stage .name { font-family: var(--display); font-weight: 700; font-size: clamp(36px, 6vw, 80px); line-height: 1.05; max-width: 18ch; overflow-wrap: anywhere; }
+.slip { background: var(--fg); color: var(--on-accent); border-radius: 6px; padding: 20px 28px; max-width: min(900px, 100%); min-height: 3.2em; display: flex; align-items: center; gap: 18px; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35); transform: rotate(-1.2deg); }
+.slip .no { font-family: var(--mono); font-size: clamp(18px, 2.2vw, 26px); color: #8A5A2B; }
+.slip .t { font-family: var(--display); font-weight: 700; font-size: clamp(24px, 3.6vw, 46px); line-height: 1.15; text-align: left; }
+.slip.spinning { filter: blur(1px); opacity: 0.8; }
+.stage .hint { color: var(--muted); font-size: 15px; }
+.stage .seed { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+@media (prefers-reduced-motion: reduce) { .slip { transform: none; } .slip.spinning { filter: none; } }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--raise); border: 1px solid var(--line); padding: 10px 16px; border-radius: 10px; z-index: 20; font-size: 15px; max-width: calc(100% - 32px); }
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="brand">
+      <p class="eyebrow">AI Workshop · Part 1</p>
+      <h1>Topic Draw</h1>
+    </div>
+    <div class="stats" aria-live="polite">
+      <div class="stat"><b id="statPool">0</b><span>in the pool</span></div>
+      <div class="stat"><b id="statOwn">0</b><span>own topic</span></div>
+      <div class="stat"><b id="statTopics">0</b><span>topics</span></div>
+    </div>
+    <div class="actions" id="drawActions">
+      <button class="btn primary" id="drawBtn" type="button">Draw lots</button>
+      <button class="btn" id="replayBtn" type="button" hidden>Replay reveal</button>
+      <button class="btn" id="resetBtn" type="button" hidden>Reset draw</button>
+    </div>
+  </header>
+  <p class="note" id="drawNote">Add every student or group, mark each one <b>pool</b> or <b>own topic</b>, then press Draw lots.</p>
+  <p class="banner" id="banner" hidden></p>
+
+  <div class="panes">
+    <section class="pane" aria-labelledby="peopleTitle">
+      <div class="pane-head">
+        <h2 id="peopleTitle">Students and groups</h2>
+        <span class="note" id="peopleCount"></span>
+      </div>
+      <form id="addForm" autocomplete="off">
+        <div class="row">
+          <input type="text" id="nameInput" placeholder="Name, or group (e.g. Ana + Ben)" aria-label="Name or group" required maxlength="80">
+          <div class="choice" role="radiogroup" aria-label="Topic choice">
+            <label><input type="radio" name="choice" id="choicePool" value="pool" checked><span>Pool</span></label>
+            <label><input type="radio" name="choice" id="choiceOwn" value="own"><span>Own topic</span></label>
+          </div>
+        </div>
+        <div class="row" id="ownRow" hidden>
+          <input type="text" id="ownInput" placeholder="Their own topic" aria-label="Own topic" maxlength="160">
+        </div>
+        <div class="row">
+          <button class="btn" type="submit" id="addBtn">Add</button>
+          <button class="linkish" type="button" id="pasteToggle">Paste a list of names</button>
+        </div>
+      </form>
+      <form id="pasteForm" hidden>
+        <textarea id="pasteInput" aria-label="Names, one per line" placeholder="One name or group per line. All go into the pool."></textarea>
+        <div class="row"><button class="btn" type="submit" id="pasteBtn">Add all to the pool</button></div>
+      </form>
+      <ul class="list" id="peopleList"></ul>
+    </section>
+
+    <section class="pane" aria-labelledby="poolTitle">
+      <div class="pane-head">
+        <h2 id="poolTitle">The topic pool</h2>
+        <span class="note" id="topicCount"></span>
+      </div>
+      <ul class="list" id="topicList"></ul>
+      <form id="topicForm" autocomplete="off">
+        <div class="row">
+          <input type="text" id="topicInput" placeholder="Add a topic to the pool" aria-label="New topic" maxlength="160">
+          <button class="btn" type="submit" id="topicBtn">Add topic</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <section class="pane results" id="results" hidden aria-labelledby="resultsTitle">
+    <div class="pane-head">
+      <h2 id="resultsTitle">Who works on what</h2>
+      <span class="seed" id="resultsSeed"></span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Student / group</th><th>Choice</th><th>Topic</th></tr></thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button class="btn" type="button" id="csvBtn">Download assignments.csv</button>
+      <button class="btn" type="button" id="copyBtn">Copy as text</button>
+    </div>
+    <p class="note">Each student copies their topic into <b>AI_Tools/1_topic/my_topic.md</b>, then types <b>Run the research-question skill</b>.</p>
+  </section>
+</div>
+
+<div class="stage" id="stage" hidden role="dialog" aria-modal="true" aria-label="Topic draw">
+  <p class="count" id="stageCount"></p>
+  <p class="name" id="stageName"></p>
+  <div class="slip" id="slip"><span class="no" id="slipNo"></span><span class="t" id="slipTitle"></span></div>
+  <div class="actions">
+    <button class="btn primary" type="button" id="nextBtn">Next</button>
+    <button class="btn" type="button" id="closeBtn">Close</button>
+  </div>
+  <p class="hint">Space or → for the next draw · Esc to close</p>
+  <p class="seed" id="stageSeed"></p>
+</div>
+<p class="toast" id="toast" hidden></p>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const S = { db: null, dl: null, canWrite: true, topics: [], people: [], draw: null, local: false };
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- helpers
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === 'class') n.className = v; else if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
+    }
+    for (const k of kids) if (k != null) n.append(k.nodeType ? k : document.createTextNode(String(k)));
+    return n;
+  }
+  let toastTimer;
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 3200); }
+  function fail(e) { toast(e && e.code === 'quota_exceeded' ? 'The list is full. Remove some entries first.' : 'Could not save that change. Try again.'); }
+  // Two-step confirm built into a button (the viewer has no confirm dialog).
+  function armed(btn, label, action) {
+    if (btn.dataset.armed) { delete btn.dataset.armed; btn.classList.remove('armed'); action(); return; }
+    const old = btn.textContent; btn.dataset.armed = '1'; btn.classList.add('armed'); btn.textContent = label;
+    setTimeout(() => { if (btn.dataset.armed) { delete btn.dataset.armed; btn.classList.remove('armed'); btn.textContent = old; } }, 3000);
+  }
+
+  // ---------- the draw: seeded, so anyone can repeat it from the seed
+  function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function shuffle(arr, rnd) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function poolPeople() { return S.people.filter((p) => p.choice === 'pool'); }
+  function computeDraw(seed) {
+    const rnd = mulberry32(seed);
+    const order = shuffle(poolPeople(), rnd);
+    const picks = shuffle(S.topics, rnd).slice(0, order.length);
+    return order.map((p, i) => ({ pid: p._id, name: p.name, topicId: picks[i].id, title: picks[i].title, keywords: picks[i].keywords || '' }));
+  }
+
+  // ---------- storage (db when available, otherwise this page only)
+  const sortPeople = (a, b) => (a.createdAt || 0) - (b.createdAt || 0) || String(a._id).localeCompare(String(b._id));
+  const sortTopics = (a, b) => (a.id || 0) - (b.id || 0);
+  async function addPerson(name, choice, ownTopic) {
+    const doc = { name, choice, ownTopic: choice === 'own' ? ownTopic : '', createdAt: Date.now() };
+    if (S.db) { try { await S.db.collection('participants').add(doc); } catch (e) { fail(e); } }
+    else { S.people.push({ ...doc, _id: 'l' + Math.random().toString(36).slice(2) }); render(); }
+  }
+  async function removePerson(id) {
+    if (S.db) { try { await S.db.doc('participants/' + id).delete(); } catch (e) { fail(e); } }
+    else { S.people = S.people.filter((p) => p._id !== id); render(); }
+  }
+  async function addTopic(title) {
+    const id = S.topics.reduce((m, t) => Math.max(m, Number(t.id) || 0), 0) + 1;
+    const doc = { id, title, keywords: '', matlab_angle: '' };
+    if (S.db) { try { await S.db.doc('topics/t' + String(id).padStart(3, '0')).set(doc); } catch (e) { fail(e); } }
+    else { S.topics.push({ ...doc, _id: 't' + id }); render(); }
+  }
+  async function removeTopic(t) {
+    if (S.db) { try { await S.db.doc('topics/' + t._id).delete(); } catch (e) { fail(e); } }
+    else { S.topics = S.topics.filter((x) => x !== t); render(); }
+  }
+  async function saveDraw(draw) {
+    if (S.db) await S.db.doc('draw/current').set(draw); else { S.draw = draw; render(); }
+  }
+  async function clearDraw() {
+    if (S.db) { try { await S.db.doc('draw/current').delete(); } catch (e) { fail(e); } } else { S.draw = null; render(); }
+  }
+
+  // ---------- render
+  function render() {
+    const pool = poolPeople();
+    const own = S.people.filter((p) => p.choice === 'own');
+    $('statPool').textContent = pool.length;
+    $('statOwn').textContent = own.length;
+    $('statTopics').textContent = S.topics.length;
+    $('peopleCount').textContent = S.people.length ? S.people.length + ' entered' : '';
+    $('topicCount').textContent = S.topics.length ? S.topics.length + ' topics' : '';
+
+    // people
+    const pl = $('peopleList'); pl.replaceChildren();
+    if (!S.people.length) pl.append(el('li', { class: 'empty' }, 'Nobody yet. Add each student or group above: Pool, or Own topic with their topic.'));
+    for (const p of S.people) {
+      const rm = el('button', { class: 'x', type: 'button', 'aria-label': 'Remove ' + p.name }, 'Remove');
+      rm.addEventListener('click', () => armed(rm, 'Sure?', () => removePerson(p._id)));
+      if (!S.canWrite) rm.hidden = true;
+      pl.append(el('li', {}, el('span', { class: 'chip ' + p.choice }, p.choice === 'own' ? 'OWN' : 'POOL'),
+        el('span', { class: 'who' }, el('b', {}, p.name), p.choice === 'own' ? el('small', {}, p.ownTopic || 'topic not given') : null), rm));
+    }
+
+    // topics
+    const taken = new Set((S.draw && S.draw.assignments || []).map((a) => a.topicId));
+    const tl = $('topicList'); tl.replaceChildren();
+    if (!S.topics.length) tl.append(el('li', { class: 'empty' }, S.db ? 'Loading the topic pool…' : 'No topics yet. Add them below.'));
+    for (const t of S.topics) {
+      const rm = el('button', { class: 'x', type: 'button', 'aria-label': 'Remove topic ' + t.title }, 'Remove');
+      rm.addEventListener('click', () => armed(rm, 'Sure?', () => removeTopic(t)));
+      if (!S.canWrite || S.draw) rm.hidden = true;
+      tl.append(el('li', { class: taken.has(t.id) ? 'taken' : '' }, el('span', { class: 'num' }, String(t.id).padStart(2, '0')),
+        el('span', { class: 'who' }, el('b', {}, t.title), t.keywords ? el('small', {}, t.keywords.split(';').map((s) => s.trim()).filter(Boolean).slice(0, 4).join(' · ')) : null), rm));
+    }
+
+    // draw controls
+    const drawn = !!S.draw;
+    const tooMany = pool.length > S.topics.length;
+    $('drawBtn').hidden = drawn || !S.canWrite;
+    $('drawBtn').disabled = !pool.length || tooMany;
+    $('replayBtn').hidden = !drawn;
+    $('resetBtn').hidden = !drawn || !S.canWrite;
+    $('drawNote').textContent = drawn
+      ? 'Drawn with seed ' + S.draw.seed + '. ' + (S.draw.assignments.length < pool.length ? 'Some people were added after the draw: reset to include them.' : 'Replay the reveal any time.')
+      : tooMany ? pool.length + ' in the pool but only ' + S.topics.length + ' topics. Add topics or move people to Own topic.'
+      : !pool.length ? 'Add every student or group, mark each one Pool or Own topic, then press Draw lots.'
+      : pool.length + ' will each get a different topic from the pool of ' + S.topics.length + '.';
+    for (const id of ['addForm', 'pasteToggle', 'topicForm']) $(id).hidden = !S.canWrite;
+    if (!S.canWrite) $('pasteForm').hidden = true;
+
+    // results
+    $('results').hidden = !drawn && !own.length;
+    const byPid = new Map((S.draw && S.draw.assignments || []).map((a) => [a.pid, a]));
+    const rb = $('resultsBody'); rb.replaceChildren();
+    for (const p of S.people) {
+      const a = byPid.get(p._id);
+      const topic = p.choice === 'own' ? (p.ownTopic || '(own topic not given)') : a ? '#' + a.topicId + ' ' + a.title : drawn ? 'not in this draw' : 'waiting for the draw';
+      rb.append(el('tr', {}, el('td', {}, p.name), el('td', {}, el('span', { class: 'chip ' + p.choice }, p.choice === 'own' ? 'OWN' : 'POOL')), el('td', {}, topic)));
+    }
+    $('resultsSeed').textContent = drawn ? 'seed ' + S.draw.seed : '';
+    $('csvBtn').hidden = !S.dl;
+  }
+
+  function rows() {
+    const byPid = new Map((S.draw && S.draw.assignments || []).map((a) => [a.pid, a]));
+    return S.people.map((p) => {
+      const a = byPid.get(p._id);
+      return p.choice === 'own' ? [p.name, 'own', 'own', p.ownTopic || '', ''] : [p.name, 'pool', a ? a.topicId : '', a ? a.title : '', a ? a.keywords : ''];
+    });
+  }
+  const csvCell = (v) => { const s = String(v ?? ''); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+
+  // ---------- reveal stage
+  let R = { list: [], i: -1, spinning: false };
+  function openStage(list) { R = { list, i: -1, spinning: false }; $('stage').hidden = false; $('stageSeed').textContent = S.draw ? 'seed ' + S.draw.seed : ''; next(); $('nextBtn').focus(); }
+  function closeStage() { $('stage').hidden = true; $('drawBtn').focus(); }
+  function next() {
+    if (R.spinning) return;
+    if (R.i >= R.list.length - 1) { closeStage(); return; }
+    R.i++;
+    const a = R.list[R.i];
+    $('stageCount').textContent = (R.i + 1) + ' / ' + R.list.length;
+    $('stageName').textContent = a.name;
+    $('nextBtn').textContent = R.i === R.list.length - 1 ? 'Show the results' : 'Next';
+    const land = () => { $('slip').classList.remove('spinning'); $('slipNo').textContent = '#' + String(a.topicId).padStart(2, '0'); $('slipTitle').textContent = a.title; R.spinning = false; };
+    if (reduceMotion || S.topics.length < 2) { land(); return; }
+    R.spinning = true; $('slip').classList.add('spinning');
+    let n = 0;
+    const tick = () => {
+      const t = S.topics[Math.floor(Math.random() * S.topics.length)];
+      $('slipNo').textContent = '#' + String(t.id).padStart(2, '0'); $('slipTitle').textContent = t.title;
+      if (++n < 14) setTimeout(tick, 60 + n * 8); else land();
+    };
+    tick();
+  }
+
+  // ---------- events
+  document.querySelectorAll('input[name="choice"]').forEach((r) => r.addEventListener('change', () => { $('ownRow').hidden = !$('choiceOwn').checked; }));
+  $('addForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = $('nameInput').value.trim(); if (!name) return;
+    const choice = $('choiceOwn').checked ? 'own' : 'pool';
+    await addPerson(name, choice, $('ownInput').value.trim());
+    $('nameInput').value = ''; $('ownInput').value = ''; $('nameInput').focus();
+  });
+  $('pasteToggle').addEventListener('click', () => { $('pasteForm').hidden = !$('pasteForm').hidden; if (!$('pasteForm').hidden) $('pasteInput').focus(); });
+  $('pasteForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const names = $('pasteInput').value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    for (const n of names) await addPerson(n, 'pool', '');
+    $('pasteInput').value = ''; $('pasteForm').hidden = true;
+    if (names.length) toast('Added ' + names.length + ' to the pool.');
+  });
+  $('topicForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const t = $('topicInput').value.trim(); if (!t) return;
+    await addTopic(t); $('topicInput').value = '';
+  });
+  $('drawBtn').addEventListener('click', async () => {
+    const seed = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000;
+    const assignments = computeDraw(seed);
+    const draw = { seed, drawnAt: Date.now(), assignments };
+    try { await saveDraw(draw); S.draw = draw; render(); openStage(assignments); } catch (e) { fail(e); }
+  });
+  $('replayBtn').addEventListener('click', () => S.draw && openStage(S.draw.assignments));
+  $('resetBtn').addEventListener('click', () => armed($('resetBtn'), 'Click again to reset', clearDraw));
+  $('nextBtn').addEventListener('click', next);
+  $('closeBtn').addEventListener('click', closeStage);
+  document.addEventListener('keydown', (e) => {
+    if ($('stage').hidden) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeStage(); }
+    else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter') { if (e.target.tagName !== 'BUTTON' || e.key !== 'Enter') { e.preventDefault(); next(); } }
+  });
+  $('csvBtn').addEventListener('click', async () => {
+    const lines = [['name', 'choice', 'topic_id', 'topic', 'keywords'], ...rows()].map((r) => r.map(csvCell).join(','));
+    try { await S.dl.save({ filename: 'assignments.csv', data: lines.join('\n') + '\n' }); toast('Saved assignments.csv'); }
+    catch (e) { if (e && e.code !== 'declined') toast('Download is not available here. Use Copy as text.'); }
+  });
+  $('copyBtn').addEventListener('click', async () => {
+    const text = rows().map((r) => r[0] + ': ' + (r[1] === 'own' ? r[3] + ' (own topic)' : r[2] ? '#' + r[2] + ' ' + r[3] : 'no topic yet')).join('\n');
+    try { await navigator.clipboard.writeText(text); toast('Copied ' + rows().length + ' lines.'); }
+    catch { toast('Copy is blocked here. Select the table and copy it.'); }
+  });
+
+  // ---------- start
+  render();
+  (async () => {
+    const C = window.claude;
+    const [db, dl, user] = C ? await Promise.all([C.use('db'), C.use('downloads'), C.use('user')]) : [null, null, null];
+    S.dl = dl;
+    S.canWrite = user ? await user.canEdit() : true;
+    if (!db) {
+      S.local = true;
+      const b = $('banner'); b.hidden = false;
+      b.textContent = 'Saving is not available in this view, so this list lives only in this browser tab until you close it. The draw still works.';
+      render(); return;
+    }
+    S.db = db;
+    const onErr = () => { const b = $('banner'); b.hidden = false; b.textContent = 'Lost the connection to the saved list. Reload the page.'; };
+    db.collection('topics').onSnapshot((s) => { S.topics = s.docs.map((d) => ({ ...d.data(), _id: d.id })).sort(sortTopics); render(); }, onErr);
+    db.collection('participants').onSnapshot((s) => { S.people = s.docs.map((d) => ({ ...d.data(), _id: d.id })).sort(sortPeople); render(); }, onErr);
+    db.doc('draw/current').onSnapshot((s) => { S.draw = s.exists ? s.data() : null; render(); }, onErr);
+  })();
+})();
+</script>

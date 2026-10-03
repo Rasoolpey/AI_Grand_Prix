@@ -1,0 +1,19 @@
+# Planning TODOs stay on the instructor's machine only.
+instructor/TODO_WORKSHOP.md
+instructor/TODO_RACE.md
+
+# Created per student by setup.ps1 — never commit
+# (AI_Tools/my_keys.env is tracked as an EMPTY template: never commit it with a key in it)
+.tools/
+AI_Tools/.agents/mcp_config.json
+AI_Tools/.agents/mcp_config.json.bak
+AI_Tools/3_papers/pdf/*.pdf
+AI_Tools/3_papers/text/*.md
+AI_Tools/5_proposal/figure/*.png
+AI_Tools/5_proposal/figure/*.svg
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/

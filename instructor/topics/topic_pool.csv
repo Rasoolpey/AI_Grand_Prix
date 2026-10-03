@@ -1,0 +1,21 @@
+id,title,keywords,matlab_angle
+1,Battery thermal management in electric vehicles,"battery cooling; thermal runaway; liquid cooling; EV",Lumped thermal model of a cell pack under a drive cycle
+2,Model predictive control for autonomous racing,"MPC; trajectory tracking; racing line; vehicle dynamics",MPC vs pure pursuit on a kinematic bicycle model
+3,State-of-charge estimation for lithium-ion batteries,"SOC; Kalman filter; equivalent circuit model",Extended Kalman filter vs coulomb counting
+4,Grid-forming inverters in renewable-rich power grids,"grid-forming; virtual inertia; inverter control; stability",Frequency response of a small grid with and without virtual inertia
+5,Pitch control of wind turbines in turbulent wind,"wind turbine; pitch control; load reduction; PID",PI vs gain-scheduled pitch control on a simplified turbine
+6,Regenerative braking strategies for electric vehicles,"regenerative braking; energy recovery; brake blending",Energy recovered over a city drive cycle
+7,Path planning for mobile robots among moving obstacles,"path planning; A*; RRT; dynamic obstacles",A* vs RRT on a grid with moving obstacles
+8,Vibration suppression in lightweight robot arms,"flexible manipulator; vibration; input shaping",Input shaping vs plain step commands on a flexible link
+9,Fault detection in electric motors from vibration signals,"condition monitoring; bearing fault; FFT; machine learning",Spectral features vs raw thresholds on simulated faults
+10,Home batteries and solar PV for demand response,"demand response; home energy management; PV; battery scheduling",Rule-based vs optimised battery scheduling for a household
+11,Attitude control of quadrotor drones under wind gusts,"quadrotor; attitude control; disturbance rejection",PID vs LQR attitude control with gust disturbances
+12,Active noise cancellation in headphones,"ANC; adaptive filter; LMS; acoustics",LMS adaptive filter cancelling tonal and broadband noise
+13,Maximum power point tracking for solar PV under partial shading,"MPPT; partial shading; perturb and observe; PV",Perturb-and-observe vs incremental conductance under shading
+14,Vehicle-to-grid support for frequency regulation,"V2G; frequency regulation; EV fleet; ancillary services",Grid frequency deviation with and without an EV fleet responding
+15,Traffic signal control with reinforcement learning,"traffic control; reinforcement learning; queue length",Fixed-time vs adaptive signals on a single intersection
+16,Tyre–road friction estimation for vehicle safety,"friction estimation; ABS; slip; vehicle safety",Slip-based friction estimation on dry vs wet road
+17,Digital twins for predictive maintenance,"digital twin; predictive maintenance; degradation model",Remaining-useful-life prediction from a degradation model
+18,Energy-efficient HVAC control in buildings,"HVAC; building energy; thermal comfort; MPC",Thermostat vs predictive control of a one-room thermal model
+19,Energy management in hydrogen fuel cell vehicles,"fuel cell vehicle; energy management; hybrid battery",Rule-based power split between fuel cell and battery
+20,Sensor fusion of IMU and GPS for vehicle localisation,"sensor fusion; Kalman filter; IMU; GPS; localisation",Kalman filter fusing noisy GPS with an IMU on a test path

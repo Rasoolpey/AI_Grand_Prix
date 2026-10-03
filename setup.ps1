@@ -1,0 +1,638 @@
+<#
+=============================================================================
+ setup.ps1 — AI Workshop one-command setup for Windows (Antigravity edition)
+=============================================================================
+
+ Paste this into PowerShell (no admin rights needed):
+
+     irm https://raw.githubusercontent.com/Rasoolpey/AI_Grand_Prix/main/setup.ps1 | iex
+
+ SELF-CONTAINED: everything lives in ONE folder, %USERPROFILE%\AI_Workshop.
+ Nothing is written to your global Antigravity settings, PATH or environment
+ variables. To uninstall, delete the folder (and the two desktop shortcuts).
+
+     AI_Workshop\
+       AI_Tools\        Part 1 workspace: AI tools + research   (my_keys.env = YOUR Scopus key)
+       AI_Grand_Prix\   Part 2 workspace: the race              (.agents\mcp_config.json + skills)
+       .tools\          uv, a private Python, all MCP servers, logs (you never need to open this)
+
+ Steps:
+   1. Find MATLAB                         6. Your Scopus key -> AI_Tools\my_keys.env
+   2. Workshop files                      7. Per-workspace Antigravity config + skills
+   3. uv + private Python                 8. Self-test over MCP (incl. a baseline race)
+   4. MATLAB MCP Server (MathWorks)       9. Desktop shortcuts
+   5. Google Scholar, Scopus, MarkItDown
+
+ Safe to run again — it never overwrites your own work.
+
+ Optional settings (set BEFORE running, e.g.  $env:AIW_DIR = "D:\ai"):
+   AIW_DIR              workshop folder              (default %USERPROFILE%\AI_Workshop)
+   AIW_MATLAB_ROOT      MATLAB folder, if auto-detect picks the wrong one
+   AIW_SKIP_TEST=1      skip the self-test (MATLAB start-up takes ~1-2 min)
+   AIW_LOCAL_WORKSHOP   copy AI_Tools + AI_Grand_Prix from this local folder instead of GitHub (testing)
+   AIW_REPO_BRANCH      GitHub branch to download   (default main)
+   AIW_NO_SHORTCUTS=1   don't create desktop shortcuts
+   SCOPUS_API_KEY / SCOPUS_INST_TOKEN
+                        written to AI_Tools\my_keys.env instead of asking (otherwise a key
+                        already in that file is re-used, or you are asked)
+=============================================================================
+#>
+
+function Install-AIWorkshop {
+    param(
+        [string]$WorkshopDir = $(if ($env:AIW_DIR) { $env:AIW_DIR } else { Join-Path $env:USERPROFILE 'AI_Workshop' }),
+        [string]$MatlabRoot  = $env:AIW_MATLAB_ROOT,
+        [string]$Branch      = $(if ($env:AIW_REPO_BRANCH) { $env:AIW_REPO_BRANCH } else { 'main' }),
+        [switch]$SkipSelfTest = ($env:AIW_SKIP_TEST -eq '1')
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $ProgressPreference    = 'SilentlyContinue'   # Invoke-WebRequest is ~10x slower with the progress bar
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    # PowerShell 5.1 otherwise serialises some arrays as {"value":[...],"Count":n}
+    Remove-TypeData System.Array -ErrorAction SilentlyContinue
+
+    # ------------------------------------------------------------ pinned versions
+    # Every student gets byte-identical tools. Bump these deliberately, never "latest".
+    $Pins = @{
+        Uv            = '0.12.22'                                     # github.com/astral-sh/uv
+        Python        = '3.12'
+        MatlabMcp     = 'v0.14.0'                                     # github.com/matlab/matlab-mcp-server
+        ScholarSha    = '738d60a4d69464731e7c5b3a61767c06ff2cec0d'    # github.com/JackKuo666/Google-Scholar-MCP-Server
+        ScopusSha     = '4968cc6231d129625a8448b020f5c58228d7689d'    # github.com/JOSETRA44/scopus-mcp
+        MarkItDown    = '0.0.1a7'                                     # pypi markitdown-mcp (microsoft)
+        MattPocockSha = 'd81f3a183412e71a5b1e84ca21bc1a35eea03a60'    # github.com/mattpocock/skills
+    }
+
+    $RepoName    = 'AI_Grand_Prix'
+    # One repo holds the whole workshop: README, AI_Tools/ (Part 1), AI_Grand_Prix/ (Part 2), instructor/ (not copied).
+    $WorkshopZip = "https://github.com/Rasoolpey/AI_Grand_Prix/archive/refs/heads/$Branch.zip"
+    # Everything lives under $WorkshopDir. Keep paths SHORT: Windows' 260-character limit breaks deep
+    # Python packages, and the MATLAB MCP server creates a socket in the log folder (even smaller limit).
+    $ToolsDir   = Join-Path $WorkshopDir '.tools'
+    $McpDir     = Join-Path $ToolsDir 'mcp'
+    $LogDir     = $(if ($env:AIW_LOG_DIR) { $env:AIW_LOG_DIR } else { Join-Path $ToolsDir 'log' })
+    $RaceDir    = Join-Path $WorkshopDir $RepoName
+    $ResearchDir= Join-Path $WorkshopDir 'AI_Tools'
+    $KeysFile   = Join-Path $ResearchDir 'my_keys.env'   # inside the Part 1 workspace, so students see it
+    $Total      = 9
+    $problems   = New-Object System.Collections.Generic.List[string]
+
+    # ================================================================ helpers
+    function Step([int]$n, [string]$msg) { Write-Host "`n[$n/$Total] $msg" -ForegroundColor Cyan }
+    function Ok([string]$msg)   { Write-Host "  [OK] $msg" -ForegroundColor Green }
+    function Info([string]$msg) { Write-Host "       $msg" -ForegroundColor Gray }
+    function Warn([string]$msg) { Write-Host "  [!!] $msg" -ForegroundColor Yellow; $problems.Add($msg) }
+
+    # Run a native exe without PowerShell 5.1 turning its stderr into terminating errors.
+    function Invoke-Native([string]$Exe, [string[]]$Arguments) {
+        $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+        try { & $Exe @Arguments 2>&1 | ForEach-Object { Info "$_" }; return $LASTEXITCODE }
+        finally { $ErrorActionPreference = $old }
+    }
+
+    function Save-Url([string]$Url, [string]$OutFile) {
+        Invoke-WebRequest $Url -OutFile "$OutFile.download" -UseBasicParsing
+        Move-Item "$OutFile.download" $OutFile -Force
+    }
+
+    # Download a GitHub archive (zip) and unpack its single top folder to $Dest.
+    function Expand-GitHubZip([string]$Url, [string]$Dest) {
+        $zip = Join-Path $env:TEMP ("aiw_" + [guid]::NewGuid().ToString('N') + '.zip')
+        $tmp = "$zip.d"
+        Save-Url $Url $zip
+        Expand-Archive $zip -DestinationPath $tmp -Force
+        $top = Get-ChildItem $tmp -Directory | Select-Object -First 1
+        if (Test-Path $Dest) { Remove-Item $Dest -Recurse -Force }
+        New-Item -ItemType Directory -Path (Split-Path $Dest -Parent) -Force | Out-Null
+        Move-Item $top.FullName $Dest
+        Remove-Item $zip, $tmp -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    # Copy a folder tree, but never overwrite files the student already has.
+    function Copy-Missing([string]$From, [string]$To) {
+        Get-ChildItem $From -Recurse -File -Force | ForEach-Object {
+            $rel    = $_.FullName.Substring($From.TrimEnd('\').Length).TrimStart('\')
+            $target = Join-Path $To $rel
+            if (-not (Test-Path $target)) {
+                New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+                Copy-Item $_.FullName $target
+            }
+        }
+    }
+
+    function Write-JsonFile([string]$Path, $Object) {
+        New-Item -ItemType Directory -Path (Split-Path $Path -Parent) -Force | Out-Null
+        # UTF-8 *without* BOM — some JSON readers reject a BOM.
+        [IO.File]::WriteAllText($Path, ($Object | ConvertTo-Json -Depth 30), (New-Object Text.UTF8Encoding $false))
+    }
+
+    # Merge our servers into an mcp_config.json, keeping anything else the student configured.
+    function Merge-McpConfig([string]$Path, [System.Collections.IDictionary]$Servers) {
+        $cfg = $null
+        if (Test-Path $Path) {
+            Copy-Item $Path "$Path.bak" -Force
+            try { $cfg = Get-Content $Path -Raw | ConvertFrom-Json } catch { Warn "Could not read $Path - saved a .bak copy and rewrote it." }
+        }
+        if (-not $cfg) { $cfg = New-Object PSObject }
+        if (-not ($cfg.PSObject.Properties.Name -contains 'mcpServers') -or -not $cfg.mcpServers) {
+            $cfg | Add-Member -NotePropertyName mcpServers -NotePropertyValue (New-Object PSObject) -Force
+        }
+        foreach ($name in $Servers.Keys) {
+            $cfg.mcpServers | Add-Member -NotePropertyName $name -NotePropertyValue ([pscustomobject]$Servers[$name]) -Force
+        }
+        Write-JsonFile $Path $cfg
+    }
+
+    function Get-MatlabRelease([string]$root) {
+        $vi = Join-Path $root 'VersionInfo.xml'
+        if (Test-Path $vi) {
+            try { $r = ([xml](Get-Content $vi -Raw)).MathWorks_version_info.release; if ($r) { return $r.Trim() } } catch { }
+        }
+        $leaf = Split-Path $root -Leaf
+        if ($leaf -match '^R\d{4}[ab]$') { return $leaf }
+        return 'unknown'
+    }
+
+    function Find-MatlabRoots {
+        $roots = New-Object System.Collections.Generic.List[string]
+        foreach ($hive in 'HKLM:\SOFTWARE\MathWorks\MATLAB', 'HKCU:\SOFTWARE\MathWorks\MATLAB') {
+            if (Test-Path $hive) {
+                Get-ChildItem $hive -ErrorAction SilentlyContinue | ForEach-Object {
+                    $r = (Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue).MATLABROOT
+                    if ($r) { $roots.Add($r) }
+                }
+            }
+        }
+        foreach ($base in @("$env:ProgramFiles\MATLAB", "${env:ProgramFiles(x86)}\MATLAB")) {
+            if ($base -and (Test-Path $base)) { Get-ChildItem $base -Directory -Filter 'R20*' | ForEach-Object { $roots.Add($_.FullName) } }
+        }
+        $cmd = Get-Command matlab -ErrorAction SilentlyContinue
+        if ($cmd) { $roots.Add((Split-Path (Split-Path $cmd.Source -Parent) -Parent)) }
+        $roots | Where-Object { $_ -and (Test-Path (Join-Path $_ 'bin\matlab.exe')) } |
+            ForEach-Object { (Resolve-Path $_).Path.TrimEnd('\') } | Select-Object -Unique
+    }
+
+    # Hidden input for keys.
+    function Read-Secret([string]$Prompt) {
+        $sec = Read-Host -Prompt "       $Prompt" -AsSecureString
+        $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)
+        try { return ("" + [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)).Trim() }
+        finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
+    }
+
+    # my_keys.env: plain NAME=value lines, '#' comments.
+    function Read-KeysFile([string]$Path) {
+        $kv = @{}
+        if (Test-Path $Path) {
+            foreach ($line in Get-Content $Path) {
+                if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$') { $kv[$Matches[1]] = $Matches[2].Trim('"', "'") }
+            }
+        }
+        return $kv
+    }
+
+    function Write-KeysFile([string]$Path, [string]$ScopusKey, [string]$InstToken) {
+        $text = @"
+# KEY: paste your Scopus API key after the = sign, then save (Ctrl+S) and restart Antigravity.
+# Get a key at https://dev.elsevier.com  ->  "I want an API key"  (register with your university e-mail)
+# This file stays on your computer. Never share it.
+
+SCOPUS_API_KEY=$ScopusKey
+
+# Optional: only needed OFF campus without the VPN (ask the library for an institution token).
+SCOPUS_INST_TOKEN=$InstToken
+"@
+        [IO.File]::WriteAllText($Path, $text, (New-Object Text.UTF8Encoding $false))
+    }
+
+    # ---------------------------------------------------------------- MCP self-test client
+    # Speaks the MCP stdio protocol (newline-delimited JSON-RPC) to a server, exactly like Antigravity does.
+    function Format-Arg([string]$a) {
+        if ($a -notmatch '[\s"]') { return $a }
+        return '"' + (($a -replace '(\\*)"', '$1$1\"') -replace '(\\+)$', '$1$1') + '"'
+    }
+
+    function Start-McpSession($Server) {
+        $psi = New-Object Diagnostics.ProcessStartInfo
+        $psi.FileName  = $Server.command
+        $psi.Arguments = (@($Server.args) | Where-Object { $_ } | ForEach-Object { Format-Arg $_ }) -join ' '
+        $psi.UseShellExecute        = $false
+        $psi.CreateNoWindow         = $true
+        $psi.RedirectStandardInput  = $true
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError  = $true
+        $psi.StandardOutputEncoding = [Text.Encoding]::UTF8
+        if ($Server.cwd) { $psi.WorkingDirectory = $Server.cwd }
+        if ($Server.env) { foreach ($k in $Server.env.Keys) { $psi.EnvironmentVariables[$k] = [string]$Server.env[$k] } }
+        # .NET Framework encodes the child's stdin with [Console]::InputEncoding and, if that is UTF-8 with a BOM,
+        # writes the BOM at start-up, which breaks the server's first JSON message. Use BOM-less UTF-8 while starting.
+        $prevEnc = $null
+        try { $prevEnc = [Console]::InputEncoding; [Console]::InputEncoding = New-Object Text.UTF8Encoding $false } catch { }
+        try { $p = [Diagnostics.Process]::Start($psi) }
+        finally { if ($prevEnc) { try { [Console]::InputEncoding = $prevEnc } catch { } } }
+        $null = $p.StandardError.ReadToEndAsync()     # keep draining stderr so the server never blocks on it
+        $w = New-Object IO.StreamWriter($p.StandardInput.BaseStream, (New-Object Text.UTF8Encoding $false))
+        $w.NewLine = "`n"; $w.AutoFlush = $true
+        return @{ Proc = $p; Writer = $w; NextId = 1; Pending = $null }
+    }
+
+    function Send-McpRequest($S, [string]$Method, $Params, [int]$TimeoutSec = 60) {
+        $id  = $S.NextId; $S.NextId++
+        $msg = @{ jsonrpc = '2.0'; id = $id; method = $Method }
+        if ($null -ne $Params) { $msg.params = $Params }
+        $S.Writer.WriteLine(($msg | ConvertTo-Json -Depth 20 -Compress))
+        $deadline = (Get-Date).AddSeconds($TimeoutSec)
+        while ($true) {
+            if (-not $S.Pending) { $S.Pending = $S.Proc.StandardOutput.ReadLineAsync() }
+            $left = [int](($deadline - (Get-Date)).TotalMilliseconds)
+            if ($left -le 0) { throw "no answer to '$Method' within $TimeoutSec s" }
+            if (-not $S.Pending.Wait([Math]::Min($left, 1000))) {
+                if ($S.Proc.HasExited) { throw "server exited early (exit code $($S.Proc.ExitCode))" }
+                continue
+            }
+            $line = $S.Pending.Result; $S.Pending = $null
+            if ($null -eq $line) { throw 'server closed its output' }
+            if (-not $line.TrimStart().StartsWith('{')) { continue }          # ignore stray non-JSON output
+            try { $resp = $line | ConvertFrom-Json } catch { continue }
+            if (($resp.PSObject.Properties.Name -contains 'id') -and $resp.id -eq $id) {
+                if ($resp.error) { throw "server error: $($resp.error.message)" }
+                return $resp.result
+            }
+        }
+    }
+
+    function Send-McpNotification($S, [string]$Method) {
+        $S.Writer.WriteLine((@{ jsonrpc = '2.0'; method = $Method } | ConvertTo-Json -Compress))
+    }
+
+    function Stop-McpSession($S) {
+        try { $S.Writer.Close() } catch { }
+        if (-not $S.Proc.WaitForExit(15000)) { try { $S.Proc.Kill() } catch { } }
+    }
+
+    function Initialize-Mcp($S, [int]$TimeoutSec) {
+        $null = Send-McpRequest $S 'initialize' @{
+            protocolVersion = '2025-06-18'
+            capabilities    = @{}
+            clientInfo      = @{ name = 'ai-workshop-setup'; version = '1.0' }
+        } $TimeoutSec
+        Send-McpNotification $S 'notifications/initialized'
+        return @((Send-McpRequest $S 'tools/list' @{} $TimeoutSec).tools)
+    }
+
+    function Get-ToolText($Result) {
+        (@($Result.content) | Where-Object { $_.type -eq 'text' } | ForEach-Object { $_.text }) -join "`n"
+    }
+
+    # =====================================================================================
+    Write-Host ''
+    Write-Host '  ==============================================' -ForegroundColor Magenta
+    Write-Host '        AI WORKSHOP  -  one-command setup        ' -ForegroundColor Magenta
+    Write-Host '  ==============================================' -ForegroundColor Magenta
+
+    # ================================================================ 1. MATLAB
+    Step 1 'Looking for MATLAB'
+    if ($MatlabRoot) {
+        if (-not (Test-Path (Join-Path $MatlabRoot 'bin\matlab.exe'))) { throw "AIW_MATLAB_ROOT='$MatlabRoot' does not contain bin\matlab.exe" }
+        $MatlabRoot = (Resolve-Path $MatlabRoot).Path.TrimEnd('\')
+    } else {
+        $found = @(Find-MatlabRoots)
+        if ($found.Count -eq 0) {
+            throw "MATLAB was not found. Set `$env:AIW_MATLAB_ROOT = 'C:\Program Files\MATLAB\R2024b' and run again."
+        }
+        $MatlabRoot = $found | Sort-Object { Get-MatlabRelease $_ } -Descending | Select-Object -First 1
+        if ($found.Count -gt 1) { Info "Found $($found.Count) MATLAB installs; using the newest." }
+    }
+    $release = Get-MatlabRelease $MatlabRoot
+    Ok "MATLAB $release  at  $MatlabRoot"
+    if ($release -match '^R\d{4}[ab]$' -and $release -lt 'R2024a') { Warn "MATLAB $release is older than R2024a (recommended)." }
+
+    # ================================================================ 2. Workshop files
+    Step 2 "Workshop files in $WorkshopDir"
+    New-Item -ItemType Directory -Path $WorkshopDir, $McpDir, $LogDir -Force | Out-Null
+    (Get-Item $ToolsDir -Force).Attributes = 'Hidden, Directory'   # keep the student's folder tidy
+    # Workshop package: one download for both parts. Files a student already has are never overwritten.
+    if ($env:AIW_LOCAL_WORKSHOP) {
+        $pkg = $env:AIW_LOCAL_WORKSHOP
+    } else {
+        $pkg = Join-Path $env:TEMP ("aiw_pkg_" + [guid]::NewGuid().ToString('N'))
+        Expand-GitHubZip $WorkshopZip $pkg
+    }
+    if (-not (Test-Path (Join-Path $pkg 'AI_Tools'))) { throw "Workshop package has no AI_Tools folder ($pkg)." }
+    Copy-Missing (Join-Path $pkg 'AI_Tools') $ResearchDir
+    foreach ($f in 'README.md', 'remove-keys.ps1') {      # student guide + key removal: always refresh
+        if (Test-Path (Join-Path $pkg $f)) { Copy-Item (Join-Path $pkg $f) (Join-Path $WorkshopDir $f) -Force }
+    }
+    Ok "Part 1 (AI tools) ready at $ResearchDir"
+
+    # Part 2: the race.
+    if (-not (Test-Path (Join-Path $pkg $RepoName))) { throw "Workshop package has no $RepoName folder ($pkg)." }
+    Copy-Missing (Join-Path $pkg $RepoName) $RaceDir
+    Ok "Part 2 (Grand Prix) ready at $RaceDir"
+    if (-not $env:AIW_LOCAL_WORKSHOP) { Remove-Item $pkg -Recurse -Force -ErrorAction SilentlyContinue }
+
+    # ================================================================ 3. uv + Python
+    Step 3 'Installing uv + a private Python (inside the workshop folder)'
+    # Point uv at the workshop folder for everything (binary, Python, cache) and never touch PATH.
+    # These variables only live in this PowerShell window and are restored at the end.
+    $uvEnv = [ordered]@{
+        UV_INSTALL_DIR        = Join-Path $ToolsDir 'uv'
+        UV_NO_MODIFY_PATH     = '1'
+        UV_PYTHON_INSTALL_DIR = Join-Path $ToolsDir 'python'
+        UV_PYTHON_BIN_DIR     = Join-Path $ToolsDir 'python\bin'
+        UV_CACHE_DIR          = Join-Path $ToolsDir 'cache'
+    }
+    $savedEnv = @{}
+    foreach ($k in $uvEnv.Keys) { $savedEnv[$k] = [Environment]::GetEnvironmentVariable($k, 'Process'); Set-Item "Env:$k" $uvEnv[$k] }
+    $uv = Join-Path $uvEnv.UV_INSTALL_DIR 'uv.exe'
+    if (-not (Test-Path $uv)) {
+        # Plain release zip (no installer, so no PATH change and no receipt outside the workshop folder).
+        $uvZip = Join-Path $env:TEMP ("aiw_uv_" + [guid]::NewGuid().ToString('N') + '.zip')
+        Save-Url "https://github.com/astral-sh/uv/releases/download/$($Pins.Uv)/uv-x86_64-pc-windows-msvc.zip" $uvZip
+        Expand-Archive $uvZip -DestinationPath $uvEnv.UV_INSTALL_DIR -Force
+        Remove-Item $uvZip -Force -ErrorAction SilentlyContinue
+    }
+    if (-not (Test-Path $uv)) { throw "uv did not install. Check internet access to astral.sh and github.com." }
+    Ok "uv ready ($uv)"
+    if ((Invoke-Native $uv @('python', 'install', $Pins.Python)) -ne 0) { throw "uv could not install Python $($Pins.Python)." }
+    Ok "Python $($Pins.Python) ready (private copy, does not touch any system Python)"
+
+    function Install-PyServer([string]$Name, [string[]]$Packages) {
+        $dir   = Join-Path $McpDir $Name
+        $venv  = Join-Path $dir '.venv'
+        $stamp = Join-Path $dir 'INSTALLED'
+        $want  = ($Packages -join ' ')
+        if ((Test-Path $stamp) -and (Get-Content $stamp -Raw).Trim() -eq $want -and (Test-Path "$venv\Scripts\python.exe")) {
+            Ok "$Name already installed"; return $venv
+        }
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        if ((Invoke-Native $uv @('venv', $venv, '--python', $Pins.Python, '--allow-existing', '--quiet')) -ne 0) { throw "Could not create the $Name environment." }
+        if ((Invoke-Native $uv (@('pip', 'install', '--quiet', '--python', "$venv\Scripts\python.exe") + $Packages)) -ne 0) { throw "Could not install $Name." }
+        Set-Content -Path $stamp -Value $want -Encoding ASCII
+        Ok "$Name installed"
+        return $venv
+    }
+
+    # ================================================================ 4. MATLAB MCP server
+    Step 4 "MATLAB MCP Server ($($Pins.MatlabMcp))"
+    $matlabMcpExe = Join-Path $McpDir 'matlab\matlab-mcp-server.exe'
+    $marker       = Join-Path $McpDir 'matlab\VERSION'
+    if ((Test-Path $matlabMcpExe) -and (Test-Path $marker) -and (Get-Content $marker -Raw).Trim() -eq $Pins.MatlabMcp) {
+        Ok 'Already installed'
+    } else {
+        New-Item -ItemType Directory -Path (Split-Path $matlabMcpExe -Parent) -Force | Out-Null
+        Save-Url "https://github.com/matlab/matlab-mcp-server/releases/download/$($Pins.MatlabMcp)/matlab-mcp-server-windows-x64.exe" $matlabMcpExe
+        Unblock-File $matlabMcpExe
+        Set-Content -Path $marker -Value $Pins.MatlabMcp -Encoding ASCII
+        Ok 'Downloaded'
+    }
+
+    # ================================================================ 5. Research MCP servers
+    Step 5 'Research MCP servers (Google Scholar, Scopus, MarkItDown)'
+
+    # Google Scholar — not on PyPI, so fetch the pinned source and run it through a small wrapper.
+    $scholarDir = Join-Path $McpDir 'google-scholar'
+    $scholarSrc = Join-Path $scholarDir 'src'
+    $scholarPin = Join-Path $scholarDir 'SOURCE'
+    if (-not ((Test-Path $scholarPin) -and (Get-Content $scholarPin -Raw).Trim() -eq $Pins.ScholarSha)) {
+        Expand-GitHubZip "https://github.com/JackKuo666/Google-Scholar-MCP-Server/archive/$($Pins.ScholarSha).zip" $scholarSrc
+        Set-Content -Path $scholarPin -Value $Pins.ScholarSha -Encoding ASCII
+    }
+    $scholarVenv = Install-PyServer 'google-scholar' @('mcp[cli]>=1.4.1,<2', 'scholarly>=1.7.0', 'bibtexparser<2', 'requests', 'beautifulsoup4')
+    # The upstream server print()s errors to stdout, which corrupts the MCP stream. Redirect print() to stderr.
+    $scholarRun = Join-Path $scholarDir 'run_server.py'
+    @"
+import builtins, runpy, sys
+_print = builtins.print
+def _stderr_print(*args, **kwargs):
+    kwargs.setdefault('file', sys.stderr)
+    _print(*args, **kwargs)
+builtins.print = _stderr_print
+src = r'$scholarSrc'
+sys.path.insert(0, src)
+runpy.run_path(src + r'\google_scholar_server.py', run_name='__main__')
+"@ | Set-Content -Path $scholarRun -Encoding ASCII
+
+    # Starts an MCP server after loading AI_Tools\my_keys.env into its environment, so students
+    # keep keys in one plain file instead of inside hidden config.
+    $keyLoader = Join-Path $McpDir 'run_with_keys.py'
+    @"
+import importlib, os, sys
+keys_file, target = sys.argv[1], sys.argv[2]          # target = "package.module:function"
+if os.path.exists(keys_file):
+    for line in open(keys_file, encoding='utf-8'):
+        line = line.strip()
+        if line and not line.startswith('#') and '=' in line:
+            k, v = line.split('=', 1)
+            v = v.strip().strip('"').strip("'")
+            if v:
+                os.environ[k.strip()] = v
+mod, func = target.split(':')
+sys.argv = [mod] + sys.argv[3:]
+getattr(importlib.import_module(mod), func)()
+"@ | Set-Content -Path $keyLoader -Encoding ASCII
+
+    # Scholar and Scopus use FastMCP, which mcp 2.x removed -> pin them to mcp 1.x. (MarkItDown needs mcp 2.x.)
+    $scopusVenv = Install-PyServer 'scopus' @("https://github.com/JOSETRA44/scopus-mcp/archive/$($Pins.ScopusSha).zip", 'mcp<2')
+    $mdVenv     = Install-PyServer 'markitdown' @("markitdown-mcp==$($Pins.MarkItDown)")
+    # The download cache (~400 MB) is not needed once the servers are installed.
+    $null = Invoke-Native $uv @('cache', 'clean', '--quiet')
+
+    # ================================================================ 6. Keys
+    Step 6 "Your Scopus key -> $KeysFile"
+    $researchCfg = Join-Path $ResearchDir '.agents\mcp_config.json'
+    $raceCfg     = Join-Path $RaceDir '.agents\mcp_config.json'
+    $saved     = Read-KeysFile $KeysFile
+    $scopusKey = $env:SCOPUS_API_KEY
+    $instToken = $env:SCOPUS_INST_TOKEN
+    if (-not $scopusKey) {
+        $scopusKey = $saved['SCOPUS_API_KEY']
+        $instToken = $saved['SCOPUS_INST_TOKEN']
+        if ($scopusKey) { Ok 'Using the key in AI_Tools\my_keys.env' }
+    }
+    if (-not $scopusKey) {
+        Info 'Get a key at https://dev.elsevier.com (press Enter to skip; you can paste it into AI_Tools\my_keys.env later)'
+        $scopusKey = Read-Secret 'Scopus API key'
+        if ($scopusKey) { $instToken = Read-Secret 'Scopus institution token (optional - Enter to skip)' }
+    }
+    if ($scopusKey) {
+        try {
+            $h = @{ 'X-ELS-APIKey' = $scopusKey; 'Accept' = 'application/json' }
+            if ($instToken) { $h['X-ELS-Insttoken'] = $instToken }
+            $r = Invoke-RestMethod 'https://api.elsevier.com/content/search/scopus?query=TITLE(simulation)&count=1' -Headers $h -UseBasicParsing
+            Ok "Scopus key works ($($r.'search-results'.'opensearch:totalResults') results for a test query)"
+        } catch {
+            $code = $_.Exception.Response.StatusCode.value__
+            if ($code -eq 401 -or $code -eq 403) {
+                Warn "Scopus rejected the key (HTTP $code). Check it in AI_Tools\my_keys.env; off campus you may need the institution token or the VPN."
+            } else {
+                Warn "Could not reach Scopus to check the key ($($_.Exception.Message)). Saved it anyway."
+            }
+        }
+    } else {
+        Warn "No Scopus key yet - put it in $KeysFile (Scopus tools won't work until then)."
+    }
+    Write-KeysFile $KeysFile $scopusKey $instToken
+    Ok "Saved: $KeysFile  (open it in any editor to change the key)"
+
+    # ================================================================ 7. Antigravity config
+    Step 7 'Antigravity config + skills (per workspace, nothing global)'
+    function New-MatlabServer([string]$Folder) {
+        [ordered]@{
+            command = $matlabMcpExe
+            args    = @("--matlab-root=$MatlabRoot", "--initial-working-folder=$Folder",
+                        '--matlab-display-mode=desktop', "--log-folder=$LogDir")
+        }
+    }
+    $servers = [ordered]@{
+        'matlab' = New-MatlabServer $ResearchDir
+        'google-scholar' = [ordered]@{
+            command = "$scholarVenv\Scripts\python.exe"
+            args    = @($scholarRun)
+            cwd     = $scholarSrc
+        }
+        'scopus' = [ordered]@{
+            command = "$scopusVenv\Scripts\python.exe"
+            args    = @($keyLoader, $KeysFile, 'scopus_mcp.server:main')
+        }
+        'markitdown' = [ordered]@{
+            command = "$mdVenv\Scripts\markitdown-mcp.exe"
+            args    = @()
+        }
+    }
+
+    Merge-McpConfig $researchCfg $servers
+    Ok 'AI_Tools\.agents\mcp_config.json: matlab, google-scholar, scopus, markitdown'
+    Merge-McpConfig $raceCfg ([ordered]@{ 'matlab' = (New-MatlabServer $RaceDir) })
+    Ok 'AI_Grand_Prix\.agents\mcp_config.json: matlab'
+
+    # Matt Pocock's "grilling" (+ its "grill-me" entry point), pinned, into the Part 1 workspace.
+    $skillsDir = Join-Path $ResearchDir '.agents\skills'
+    $mpStamp   = Join-Path $skillsDir '.mattpocock-version'
+    if (-not ((Test-Path $mpStamp) -and (Get-Content $mpStamp -Raw).Trim() -eq $Pins.MattPocockSha)) {
+        $mpTmp = Join-Path $env:TEMP 'aiw_mattpocock'
+        Expand-GitHubZip "https://github.com/mattpocock/skills/archive/$($Pins.MattPocockSha).zip" $mpTmp
+        foreach ($s in 'grilling', 'grill-me') {
+            $dst = Join-Path $skillsDir $s
+            if (Test-Path $dst) { Remove-Item $dst -Recurse -Force }
+            New-Item -ItemType Directory -Path $skillsDir -Force | Out-Null
+            Copy-Item (Join-Path $mpTmp "skills\productivity\$s") $dst -Recurse
+        }
+        Copy-Item (Join-Path $mpTmp 'LICENSE') (Join-Path $skillsDir 'MATTPOCOCK-LICENSE.txt') -Force -ErrorAction SilentlyContinue
+        Remove-Item $mpTmp -Recurse -Force -ErrorAction SilentlyContinue
+        Set-Content -Path $mpStamp -Value $Pins.MattPocockSha -Encoding ASCII
+    }
+    Ok 'Skills: AI_Tools -> research-question (+ grill-me, grilling), literature-search, literature-review, research-report | AI_Grand_Prix -> race-debrief'
+
+    # ================================================================ 8. Self-test
+    Step 8 'Self-test: talking to every MCP server like Antigravity will'
+    if ($SkipSelfTest) {
+        Info 'Skipped (AIW_SKIP_TEST=1).'
+    } else {
+        foreach ($name in 'google-scholar', 'scopus', 'markitdown') {
+            $s = $null
+            try {
+                $s = Start-McpSession $servers[$name]
+                $tools = @(Initialize-Mcp $s 90)
+                Ok "$name answers ($($tools.Count) tools)"
+            } catch {
+                Warn "$name did not start: $($_.Exception.Message)"
+            } finally { if ($s) { Stop-McpSession $s } }
+        }
+
+        Info 'MATLAB: starting MATLAB through MCP and running a baseline race (1-3 min)...'
+        $test = [ordered]@{ command = $matlabMcpExe
+                            args    = @("--matlab-root=$MatlabRoot", "--initial-working-folder=$RaceDir",
+                                        '--matlab-display-mode=nodesktop', "--log-folder=$LogDir") }
+        $s = $null
+        try {
+            $s     = Start-McpSession $test
+            $tools = @(Initialize-Mcp $s 60)
+            $eval  = $tools | Where-Object { $_.name -eq 'evaluate_matlab_code' } | Select-Object -First 1
+            if (-not $eval) { throw 'evaluate_matlab_code tool not offered' }
+            $code = "cd('$($RaceDir -replace "'", "''")'); r = practiceRace('Headless', true); " +
+                    "fprintf('AIW_RESULT lap=%d time=%.2f score=%.2f\n', r.lapCompleted, r.lapTime, r.score);"
+            # Fill the tool's required inputs: the code, plus any folder/path argument.
+            $toolArgs = @{}
+            foreach ($req in @($eval.inputSchema.required)) {
+                if ($req -match 'code')               { $toolArgs[$req] = $code }
+                elseif ($req -match 'path|folder|dir') { $toolArgs[$req] = $RaceDir }
+            }
+            if ($toolArgs.Count -eq 0) { $toolArgs['code'] = $code }
+            $res  = Send-McpRequest $s 'tools/call' @{ name = 'evaluate_matlab_code'; arguments = $toolArgs } 420
+            $text = Get-ToolText $res
+            if ($text -match 'AIW_RESULT lap=1 time=([\d.]+) score=([\d.]+)') {
+                Ok "MATLAB via MCP works - baseline lap $($Matches[1]) s, score $($Matches[2])"
+            } elseif ($text -match '(?i)licen[cs]') {
+                Warn "MATLAB has no licence on this account. Open MATLAB once, sign in, then re-run setup. Log: $LogDir"
+            } elseif ($text -match 'AIW_RESULT') {
+                Warn "MATLAB via MCP works, but the baseline car did not finish a lap: $(($text -split "`n" | Select-String 'AIW_RESULT').Line)"
+            } else {
+                Warn "MATLAB answered but the race did not run. First lines: $(($text -split "`n" | Select-Object -First 3) -join ' | ')"
+            }
+        } catch {
+            Warn "MATLAB MCP test failed: $($_.Exception.Message). Logs: $LogDir"
+        } finally { if ($s) { Stop-McpSession $s } }
+    }
+
+    # ================================================================ 9. Shortcuts + summary
+    Step 9 'Desktop shortcuts'
+    # Prefer the IDE (it opens a folder as a workspace); fall back to the standalone app.
+    $agExe = @(
+        (Join-Path $env:LOCALAPPDATA 'Programs\Antigravity IDE\Antigravity IDE.exe'),
+        (Join-Path $env:ProgramFiles 'Antigravity IDE\Antigravity IDE.exe'),
+        (Join-Path $env:LOCALAPPDATA 'Programs\Antigravity\Antigravity.exe'),
+        (Join-Path $env:ProgramFiles 'Antigravity\Antigravity.exe')
+    ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($env:AIW_NO_SHORTCUTS -eq '1') {
+        Info 'Skipped (AIW_NO_SHORTCUTS=1).'
+    } elseif ($agExe) {
+        try {
+            $ws = New-Object -ComObject WScript.Shell
+            foreach ($pair in @(@('AI Workshop - Part 1 AI Tools', $ResearchDir), @('AI Workshop - Part 2 Grand Prix', $RaceDir))) {
+                $sc = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) "$($pair[0]).lnk"))
+                $sc.TargetPath       = $agExe
+                $sc.Arguments        = '"' + $pair[1] + '"'
+                $sc.WorkingDirectory = $pair[1]
+                $sc.Save()
+            }
+            Ok 'Two shortcuts created on your desktop'
+        } catch { Info "Could not create shortcuts ($($_.Exception.Message)) - open the folders from Antigravity instead." }
+    } else {
+        Warn 'Antigravity is not installed yet. Get it from https://antigravity.google/download, then open the folders below.'
+    }
+
+    foreach ($k in $savedEnv.Keys) {
+        if ($null -eq $savedEnv[$k]) { Remove-Item "Env:$k" -ErrorAction SilentlyContinue } else { Set-Item "Env:$k" $savedEnv[$k] }
+    }
+
+    Write-Host ''
+    if ($problems.Count -eq 0) {
+        Write-Host '  ==============================================' -ForegroundColor Green
+        Write-Host '    ALL SET!' -ForegroundColor Green
+        Write-Host '  ==============================================' -ForegroundColor Green
+    } else {
+        Write-Host '  ==============================================' -ForegroundColor Yellow
+        Write-Host "    Finished with $($problems.Count) warning(s):" -ForegroundColor Yellow
+        $problems | ForEach-Object { Write-Host "     - $_" -ForegroundColor Yellow }
+        Write-Host '  ==============================================' -ForegroundColor Yellow
+    }
+    Write-Host @"
+
+  NEXT STEPS
+  ----------
+  1. In Antigravity, open the folder for each part (or use the desktop shortcuts):
+       Part 1:  $ResearchDir        (tools: matlab, google-scholar, scopus, markitdown)
+       Part 2:  $RaceDir   (tools: matlab)
+  2. In the agent panel check  ...  > MCP Servers  to see the tools.
+
+  Your keys:     $KeysFile
+  Student guide: $WorkshopDir\README.md
+  Shared PC?  At the end run  $WorkshopDir\remove-keys.ps1
+              (or delete $WorkshopDir and the two desktop shortcuts)
+
+"@
+}
+
+Install-AIWorkshop
