@@ -17,3 +17,9 @@ Thumbs.db
 desktop.ini
 .DS_Store
 .vscode/
+
+# Race day: final tracks, submissions and results stay on the instructor's machine
+instructor/race/finals/
+instructor/race/submissions/*
+!instructor/race/submissions/README.md
+instructor/race/results/

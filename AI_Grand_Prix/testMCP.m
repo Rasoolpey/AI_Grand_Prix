@@ -12,11 +12,13 @@
 %     [OK] MATLAB is running: R2024b
 %     [OK] Working directory: C:\...\AI_Grand_Prix
 %     [OK] simulator/ folder found
+%     [OK] student/carDesign.m found
 %     [OK] student/controller.m found
 %     [OK] student/robotConfig.m found
 %     [OK] practiceRace.m found
 %     [OK] plotLap.m found
 %     [OK] tracks/ folder found
+%     [OK] Simulator loaded: ...
 %     =============================================
 %     All checks passed. You are ready to race!
 %
@@ -53,6 +55,7 @@ end
 
 % --- Check 4: Required files ---
 files = {
+    'student/carDesign.m',    'student car design';
     'student/controller.m',   'student controller';
     'student/robotConfig.m',  'student config';
     'practiceRace.m',         'race runner';
@@ -67,13 +70,15 @@ for k = 1:size(files,1)
     end
 end
 
-% --- Check 5: Simulator classes loadable ---
+% --- Check 5: Simulator loads and the car builds ---
 try
-    addpath('simulator'); addpath('student'); addpath('tracks');
-    v = Vehicle(0, 0, 0);
-    fprintf('[OK] Vehicle class loaded (max speed: %.0f m/s)\n', v.MAX_SPEED);
+    addpath('simulator', fullfile('simulator', 'physics'), 'student', 'tracks');
+    car = buildCar(carDesign());
+    course = loadPath('drag');
+    fprintf('[OK] Simulator loaded: %s, %.0f kg, %d of %d credits; %s %.0f m\n', ...
+        car.team, car.mass, car.cost, car.budget, course.name, course.length);
 catch ME
-    fprintf('[!!] Could not load Vehicle class: %s\n', ME.message);
+    fprintf('[!!] Could not load the simulator or your car: %s\n', ME.message);
     allGood = false;
 end
 

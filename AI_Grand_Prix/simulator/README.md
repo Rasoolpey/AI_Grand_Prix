@@ -1,4 +1,4 @@
-# simulator/ — Race Simulator
+# simulator/ — physics and rules
 
 ```
 ╔══════════════════════════════════════════╗
@@ -6,33 +6,17 @@
 ╚══════════════════════════════════════════╝
 ```
 
-These files implement the fixed simulation environment. All teams share **identical physics** — the competition is about controller quality, not simulator hacking.
+Every team uses the same simulator: the competition is about your **design** and your **controller**.
 
-## Files
-
-| File | Description |
+| File | What it does |
 |---|---|
-| `Vehicle.m` | 2D kinematic bicycle model. Enforces all physical limits. |
-| `Track.m` | Track representation, boundary queries, start/finish detection. |
-| `RaceSimulation.m` | Fixed-timestep simulation loop. Calls `controller(obs, config)` each step. |
-| `Visualizer.m` | Live 2D animation window. |
+| `parts.m` | the parts catalogue and the budget |
+| `buildCar.m` | turns `carDesign()` into the car's numbers; rejects unknown parts and over-budget cars |
+| `physics/` | the equation sheet as functions: `driveForce` (eq. 2), `roadForces` (eqs. 3, 4, 9), `gripLimit` (eq. 5), `cornerSpeed` (eq. 6), `stepCar` (one time step, eqs. 1–9) |
+| `RaceSimulation.m` | the race loop: calls `controller(obs, config)` every 0.02 s, applies the rules (checkpoints, penalties, DNF) |
+| `RacePath.m`, `buildPath.m`, `+road/` | the roads: built from straights, corners, chicanes and wet patches |
+| `benchmarkTime.m` | the estimated benchmark time (same physics, near-perfect driving on the centreline) |
+| `Visualizer.m` | the race view and HUD |
 
-## Vehicle Physics (fixed for all teams)
-
-| Parameter | Value |
-|---|---|
-| Max speed | 10 m/s (36 km/h) |
-| Max acceleration | 3 m/s² |
-| Max braking | 6 m/s² |
-| Max steering angle | 0.5 rad (~28°) |
-| Max steering rate | 1.0 rad/s |
-| Wheelbase (bicycle model) | 0.5 m |
-| Timestep | 0.02 s (50 Hz) |
-
-## What You CAN Control
-
-Only these files in `student/`:
-- `controller.m` — your autonomous control logic
-- `robotConfig.m` — tuning hyperparameters
-
-The `obs` struct your controller receives, and the `command` struct it must return, are fully documented inside `student/controller.m`.
+You may **call** these functions from your controller, e.g. `cornerSpeed(obs.car, kappa)`. The equations are explained in
+[../PHYSICS.md](../PHYSICS.md); the rules in [../README.md](../README.md).

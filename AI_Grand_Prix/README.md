@@ -1,152 +1,131 @@
-# 🏎️ AI Grand Prix — Prompt. Build. Race.
+# 🏎️ AI Grand Prix — Design. Drive. Race.
 ### Agentic AI for Electrical Engineering with MATLAB
 
-> **Build the fastest autonomous robot car using an AI engineering agent and MATLAB.**
+> **Build a small electric race car from parts, under a budget, then write its driver with your AI agent.**
 
-This is a two-hour hands-on engineering competition where you work with an AI coding agent to develop, test, improve, and race a virtual autonomous car on a simulated race track.
-
----
-
-## 🎯 Your Mission
-
-You receive a working MATLAB simulator and a baseline controller that drives the car safely — but *slowly*. Your job is to use an AI agent to:
-
-1. **Understand** the project and the controller interface
-2. **Propose** control strategies
-3. **Implement** a better autonomous controller
-4. **Test** it on the practice track
-5. **Diagnose** failures and improve
-6. **Race** on a mystery track you haven't seen before
-
-> The final race uses a **mystery track**. A solution hard-coded for the practice track will fail. Build something that generalises.
+You work in pairs (solo is fine when pairing isn't practical). Your car must finish **every path**, and each path stresses
+a different part of the design. Every part comes with **one short equation** ([PHYSICS.md](PHYSICS.md)), and the same
+equations make your controller better. The winner is the best **all-rounder**.
 
 ---
 
-## 📂 Project Structure
+## 🎯 Your mission
 
-```
-AI_Grand_Prix/
-├── README.md               ← You are here
-├── AGENTS.md               ← Rules your AI agent follows (read automatically)
-├── AGENT_GUIDE.md          ← How to talk to your AI agent effectively
-│
-├── practiceRace.m          ← Run a local practice race
-├── plotLap.m               ← Diagnostic plots for your agent to analyse
-├── testMCP.m               ← Verify your agent↔MATLAB connection works
-│
-├── student/
-│   ├── controller.m        ← ⭐ YOUR MAIN FILE — edit this with the agent
-│   └── robotConfig.m       ← Optional: tuning hyperparameters
-│
-├── simulator/              ← DO NOT MODIFY
-│   ├── Vehicle.m
-│   ├── Track.m
-│   ├── RaceSimulation.m
-│   └── Visualizer.m
-│
-└── tracks/
-    └── createPracticeTrack.m  ← Practice track (the final track is revealed on the day)
-```
+1. **Design** the car: choose 5 parts within **80 credits** (`student/carDesign.m`). Check it in the **Garage**.
+2. **Drive** it: improve the controller with your agent (`student/controller.m`, `student/robotConfig.m`).
+3. **Test** on the practice paths, read the lap report, change **one thing at a time**.
+4. **Explain** one design trade-off you made, with numbers (3–4 sentences).
+5. **Submit** before the code freeze (`submitCar`).
+
+On race day every car runs the **final paths** (same kind of paths, new layouts you have not seen). All cars appear
+together on the projector in a recorded broadcast.
 
 ---
 
-## 🚀 Getting Started
+## 🧰 The parts (budget 80 credits)
 
-### Step 1 — Set up your environment
-Follow the workshop guide (`AI_Workshop\README.md`). One command installs everything, including the MATLAB MCP server
-that lets your agent in Antigravity run MATLAB. Then open **this folder** in Antigravity.
+| Part | Option A | Option B | Option C | What it changes |
+|---|---|---|---|---|
+| Motor | `"2kW"` · 7 kg · 10 | `"3.5kW"` · 11 kg · 20 | `"5.5kW"` · 16 kg · 35 | acceleration (P in eq. 2) |
+| Battery | `"45Wh"` · 5 kg · 10 | `"70Wh"` · 8 kg · 18 | `"100Wh"` · 12 kg · 30 | energy for the endurance (eq. 8) |
+| Tyres | `"hard"` μ 0.9, C_rr 0.012 · 5 | `"medium"` μ 1.1, C_rr 0.020 · 12 | `"soft"` μ 1.3, C_rr 0.032 · 20 | grip vs rolling loss (eqs. 4–6) |
+| Aero kit | `"none"` C_DA 0.35 · 0 | `"lowdrag"` C_DA 0.30, C_LA 0.3 · 2 kg · 10 | `"downforce"` C_DA 0.50, C_LA 1.2 · 4 kg · 20 | drag vs downforce (eqs. 3, 6) |
+| Gearing | `"short"` v_gear 14 m/s, F_gear 800 N | `"medium"` 17 m/s, 560 N | `"long"` 20 m/s, 380 N | pull from standstill vs top speed (eq. 2) · free |
 
-### Step 2 — Learn to prompt effectively
-Read **[AGENT_GUIDE.md](AGENT_GUIDE.md)** for the prompt cheat-sheet.
+Chassis 70 kg. You cannot afford the best of everything, and "the best" depends on the path.
 
-### Step 3 — Verify your connection
-Run `testMCP` in MATLAB, or ask your agent to run it for you.
+---
 
-### Step 4 — Start your first race
-```matlab
-% With visualisation (watch the car drive):
-practiceRace
+## 🛣️ The paths
 
-% Headless (faster — use this when iterating quickly):
-practiceRace('Headless', true)
+| Path | What it is | What it tests |
+|---|---|---|
+| **Drag strip** (`"drag"`) | 150 m straight from a standing start, then a 10 m **stop box** | motor, gearing, mass, braking |
+| **Technical circuit** (`"technical"`) | ≈ 370 m, hairpins, a chicane, short straights; 1 lap | tyres, mass, your controller |
+| **Endurance** (`"endurance"`) | ≈ 380 m fast circuit with a hill; 5 laps | battery, aero, rolling loss, energy strategy |
+| Wet practice (`"wet"`) | a short loop with one wet patch (grip × 0.6–0.8, flagged in advance) | reading the road ahead |
 
-% Save results and diagnose:
-r = practiceRace('Headless', true);
-plotLap(r)
-```
+### Finishing, penalties, DNF
 
-### Step 5 — Read the diagnostics
-`plotLap` generates 4 panels your agent should analyse:
-- **Trajectory** — is the car staying on track? cutting corners?
-- **Speed profile** — where is it fast/slow relative to the track?
-- **Steering angle** — is it oscillating? saturating at ±0.5 rad?
-- **Cross-track error** — how far is it from the centreline?
+| | Finish | Penalties (still a finish) | DNF |
+|---|---|---|---|
+| Drag strip | cross the line, then **come to rest** | stop past the box (in the run-off): **+3 s** | hit the barrier at the end; over 30 s |
+| Circuits | pass **every checkpoint in order**, cross the line forwards, every lap | off-track **+5 s** per incident; barrier **+10 s** per contact | a checkpoint missed (shortcut); stopped > 3 s; time limit; controller error |
 
-### Step 6 — Build something great
-Open `student/controller.m` and start working with your agent.
-Read [AGENT_GUIDE.md](AGENT_GUIDE.md) for prompt templates that get results.
+An empty battery gives no drive: the car **coasts**, and still finishes if it rolls over the line.
 
 ---
 
 ## 🏁 Scoring
 
-| Metric | Points |
-|---|---|
-| Lap time | +1 per second |
-| Off-track exit | +5 per event |
-| Collision / barrier | +10 per event |
-| Did Not Finish | DNF |
-
-**Lowest score wins.** The official championship uses the mystery track under identical physics on the instructor's machine.
+- Per path: **s = min(120, 100 × T_ref / T)**, where T is your time + penalties and T_ref the reference car's time. DNF = 0.
+- **Overall = 0.6 × mean(s) + 0.4 × min(s)**: being good everywhere beats being brilliant once.
+  (A specialist scoring 95 / 95 / 20 gets 50; an all-rounder scoring 75 / 75 / 75 gets 75.)
+- Ranking: cars that finished every path first, by overall score; then the others by paths completed.
+- Awards: 🏁 overall champion · ⚡ best single path · 🧠 best engineering explanation · 🤖 best use of the agent.
 
 ---
 
-## 📋 Controller Interface
+## 🚀 Commands
 
-Your agent should modify `student/controller.m`. It receives:
+```matlab
+testMCP                                    % check that everything is installed
+garage                                     % your car: drawing, numbers, cost, estimates
+practiceRace                               % technical circuit, with animation
+practiceRace('Path', 'drag')               % "drag" | "technical" | "endurance" | "wet"
+r = practiceRace('Path', 'endurance', 'Headless', true);   % fast, no animation
+plotLap(r)                                 % lap report: grip use, speed vs eq. 6, battery, ...
+practiceRace('Path', 'all')                % the three paths + your overall score
+submitCar                                  % check and hand in (you can resubmit until the freeze)
+```
+
+**Garage estimates and the "benchmark" time** come from the equations with near-perfect driving on the centreline.
+They are estimates, not limits; your controller decides how close you get (*efficiency = benchmark ÷ your time*).
+
+---
+
+## 📂 Project structure
+
+```
+AI_Grand_Prix/
+├── README.md  PHYSICS.md  AGENTS.md  AGENT_GUIDE.md
+├── garage.m  practiceRace.m  plotLap.m  submitCar.m  testMCP.m
+├── student/                 ⭐ your files
+│   ├── carDesign.m          the 5 parts
+│   ├── controller.m         the driver
+│   └── robotConfig.m        tuning values
+├── tracks/                  practice paths (read-only)
+└── simulator/               physics and rules (DO NOT MODIFY)
+```
+
+---
+
+## 📋 Controller interface
 
 ```matlab
 function command = controller(obs, config)
 ```
 
-**Inputs (`obs`):**
-
-| Field | Description |
+| Input | Meaning |
 |---|---|
-| `obs.position` | `[x, y]` — vehicle position (m) |
-| `obs.heading` | θ — heading angle (rad) |
-| `obs.speed` | v — current speed (m/s) |
-| `obs.previewPoints` | N×2 array of upcoming centreline points |
-| `obs.trackWidth` | track width (m) |
-| `obs.dt` | simulation timestep (s) |
+| `obs.position`, `obs.heading`, `obs.speed`, `obs.steeringAngle` | where the car is, where it points, how fast |
+| `obs.previewPoints` | next ~60 centreline points, ~1 m apart: `[x y grade(%) wet(0/1)]` |
+| `obs.car` | the car you built: `mass, mu, Crr, power, CdA, ClA, vGear, Fgear, ...` |
+| `obs.batteryWh`, `obs.batteryFrac` | energy left |
+| `obs.path` | `type, lap, laps, lapsLeft, nextCheckpoint, distanceToFinish, distanceToStop` |
+| `obs.time`, `obs.dt`, `obs.trackWidth` | |
 
-**Outputs (`command`):**
+| Output | Range |
+|---|---|
+| `command.throttle` | −1 (full brake) … +1 (full drive) |
+| `command.steering` | −1 (full right) … +1 (full left) |
 
-| Field | Range | Description |
-|---|---|---|
-| `command.throttle` | −1 to +1 | negative = brake, positive = accelerate |
-| `command.steering` | −1 to +1 | negative = left, positive = right |
+`persistent` variables are allowed (cleared before every run). The simulator's `cornerSpeed(obs.car, kappa)` gives the
+safe corner speed of equation 6.
 
-The simulator enforces physical limits — you cannot exceed max speed, acceleration, or steering angle by commanding extreme values.
-
----
-
-## 🤝 Rules
-
-- Only modify files in the `student/` folder
-- Do **not** modify anything in `simulator/`
-- Your controller must work on an **unseen track** — no hard-coding track coordinates
-- Your AI agent is a tool — **you** are the engineer responsible for the result
+> The final paths are new layouts. A controller tuned to the practice coordinates will fail: **build something that
+> generalises.**
 
 ---
 
-## 📞 Need Help?
-
-1. Ask your AI agent — that's the point!
-2. Check [AGENT_GUIDE.md](AGENT_GUIDE.md) for prompt examples
-3. Run `plotLap` to get diagnostic plots your agent can analyse
-4. Flag a tutor if you're completely stuck
-
----
-
-*Good luck. Prompt → Build → Test → Fail → Diagnose → Improve → Race.*
+*Design → Drive → Test → Diagnose → Improve → Race.*

@@ -1,137 +1,110 @@
 function results = practiceRace(varargin)
-% PRACTICERACE  Run a local practice race with your autonomous controller.
+% PRACTICERACE  Race your car (carDesign.m + controller.m) on a practice path.
 %
-%   USAGE:
-%     practiceRace                          % run with visualisation
-%     practiceRace('Headless', true)        % fast run, no animation
-%     results = practiceRace(...)           % also return results struct
+%   practiceRace                                % technical circuit, with animation
+%   practiceRace('Path', 'drag')                % "drag" | "technical" | "endurance" | "wet"
+%   practiceRace('Path', 'all')                 % the three core paths, headless, + overall score
+%   r = practiceRace('Path', 'endurance', 'Headless', true);
 %
-%   OPTIONS (name-value pairs):
-%     'Headless'   logical  — skip animation (faster, useful for rapid tuning)
-%                            default: false
-%     'MaxTime'    numeric  — maximum allowed lap time in seconds
-%                            default: 120
-%     'DT'         numeric  — simulation timestep in seconds
-%                            default: 0.02  (50 Hz)
+%   Options:
+%     'Path'      which practice path                       ("technical")
+%     'Headless'  true = no animation, much faster          (false)
+%     'Quiet'     true = print nothing                      (false)
 %
-%   RETURNS:
-%     results.lapCompleted  — true if lap finished within MaxTime
-%     results.lapTime       — lap time in seconds (Inf if DNF)
-%     results.nOffTrack     — number of off-track excursions (debounced)
-%     results.nCollision    — number of hard barrier contacts
-%     results.dnf           — true if did not finish
-%     results.dnfReason     — reason string
-%     results.score         — lapTime + 5*exits + 10*collisions (Inf if DNF)
-%     results.log           — full telemetry struct for plotLap()
+%   results: finished, dnf, dnfReason, time, penalty, totalTime, nOffTrack,
+%     nBarrier, stopInRunoff, lapTimes, energyUsedWh, batteryLeftFrac,
+%     benchmark (estimated benchmark time, see below), score, log (for plotLap)
+%   With 'Path','all': a struct array, one element per path, plus .overall.
 %
-%   EXAMPLES:
-%     % Run and check score
-%     r = practiceRace('Headless', true);
-%     fprintf('Score: %.2f\n', r.score);
+%   Estimated benchmark time: what YOUR CAR could do on the centreline with
+%   near-perfect driving (benchmarkTime).  It is an estimate, not a limit.
+%   Controller efficiency = benchmark / your time.
 %
-%     % Run and plot diagnostics
-%     r = practiceRace('Headless', true);
-%     plotLap(r);
+%   Score per path (same rule as race day):  s = min(120, 100 * T_ref / T)
+%   with T_ref the reference car's time; overall = 0.6 mean(s) + 0.4 min(s).
 %
-%   See also: plotLap, student/controller.m, AGENT_GUIDE.md
+%   See also: plotLap, garage, carDesign, controller
 
-    % ------------------------------------------------------------------ %
-    %  Parse name-value options                                           %
-    % ------------------------------------------------------------------ %
     p = inputParser();
-    p.addParameter('Headless', false, @(x) islogical(x) || isnumeric(x));
-    p.addParameter('MaxTime',  180,   @isnumeric);
-    p.addParameter('DT',       0.02,  @isnumeric);
-
+    p.addParameter('Path', "technical");
+    p.addParameter('Headless', false);
+    p.addParameter('Quiet', false);
+    p.addParameter('DT', 0.02);
     p.parse(varargin{:});
-    opts = p.Results;
-    opts.Headless = logical(opts.Headless);
+    opt = p.Results;
 
-    % ------------------------------------------------------------------ %
-    %  Setup paths                                                        %
-    % ------------------------------------------------------------------ %
     thisDir = fileparts(mfilename('fullpath'));
-    addpath(fullfile(thisDir, 'simulator'));
-    addpath(fullfile(thisDir, 'student'));
-    addpath(fullfile(thisDir, 'tracks'));
+    addpath(fullfile(thisDir, 'simulator'), fullfile(thisDir, 'simulator', 'physics'), ...
+            fullfile(thisDir, 'student'), fullfile(thisDir, 'tracks'));
 
-    % ------------------------------------------------------------------ %
-    %  Load (or generate) practice track                                 %
-    % ------------------------------------------------------------------ %
-    trackFile = fullfile(thisDir, 'tracks', 'practiceTrack.mat');
-    if ~exist(trackFile, 'file')
-        fprintf('  Generating practice track for the first time...\n');
-        trackData = createPracticeTrack();
-        save(trackFile, 'trackData');
-        fprintf('  Saved to tracks/practiceTrack.mat\n');
-    else
-        load(trackFile, 'trackData'); %#ok<LOAD>
-    end
-    track = Track(trackData);
-
-    % ------------------------------------------------------------------ %
-    %  Load student controller config                                    %
-    % ------------------------------------------------------------------ %
+    car = buildCar(carDesign());
     config = struct();
     try
         config = robotConfig();
     catch ME
-        warning('practiceRace: Could not load robotConfig — %s', ME.message);
+        warning('practiceRace:config', 'Could not load robotConfig: %s', ME.message);
     end
 
-    % ------------------------------------------------------------------ %
-    %  Initialise vehicle at start/finish line                           %
-    % ------------------------------------------------------------------ %
-    startPos   = trackData.centreline(1, :);
-    startTang  = trackData.centreline(2,:) - trackData.centreline(1,:);
-    startHeading = atan2(startTang(2), startTang(1));
-    vehicle = Vehicle(startPos(1), startPos(2), startHeading);
-
-    % ------------------------------------------------------------------ %
-    %  Print banner                                                       %
-    % ------------------------------------------------------------------ %
-    fprintf('\n');
-    fprintf('============================================================\n');
-    fprintf('  AI GRAND PRIX — Practice Race\n');
-    fprintf('  Track  : %s  (%.0f m)\n', track.name, track.lapLength);
-    fprintf('  MaxTime: %.0f s     DT: %.3f s     Headless: %d\n', ...
-        opts.MaxTime, opts.DT, opts.Headless);
-    fprintf('============================================================\n');
-
-    % ------------------------------------------------------------------ %
-    %  Run simulation                                                     %
-    % ------------------------------------------------------------------ %
-    simOpts.headless = opts.Headless;
-    simOpts.maxTime  = opts.MaxTime;
-    simOpts.dt       = opts.DT;
-
-    tic;
-    results = RaceSimulation(track, vehicle, @controller, config, simOpts);
-    wallTime = toc;
-
-    % ------------------------------------------------------------------ %
-    %  Print results                                                      %
-    % ------------------------------------------------------------------ %
-    fprintf('============================================================\n');
-    fprintf('  RACE RESULTS\n');
-    fprintf('------------------------------------------------------------\n');
-    if results.dnf
-        fprintf('  Result    : DNF — %s\n', results.dnfReason);
+    if strcmpi(string(opt.Path), "all")
+        names = ["drag", "technical", "endurance"];
+        for i = numel(names):-1:1
+            r(i) = runOne(names(i), true, true); %#ok<AGROW>
+        end
+        r = reshape(r, 1, []);
+        sc = [r.score];
+        overall = 0.6 * mean(sc) + 0.4 * min(sc);
+        if ~opt.Quiet
+            fprintf('\n  %-12s %9s %9s %9s %7s\n', 'Path', 'Time', 'Penalty', 'Bench', 'Score');
+            for i = 1:numel(r)
+                if r(i).dnf
+                    fprintf('  %-12s %9s %9s %8.2fs %7.1f   DNF: %s\n', names(i), '-', '-', r(i).benchmark, 0, r(i).dnfReason);
+                else
+                    fprintf('  %-12s %8.2fs %8.0fs %8.2fs %7.1f\n', names(i), r(i).time, r(i).penalty, r(i).benchmark, r(i).score);
+                end
+            end
+            fprintf('  Overall = 0.6 x mean + 0.4 x min = %.1f   (%d of %d paths finished)\n\n', ...
+                overall, sum([r.finished]), numel(r));
+        end
+        [r.overall] = deal(overall);
+        results = r;
     else
-        fprintf('  Result    : Lap completed  ✓\n');
-        fprintf('  Lap time  : %.2f s\n', results.lapTime);
+        results = runOne(string(opt.Path), logical(opt.Headless), logical(opt.Quiet));
     end
-    fprintf('  Off-track : %d event(s)\n', results.nOffTrack);
-    fprintf('  Collisions: %d event(s)\n', results.nCollision);
-    if ~results.dnf
-        fprintf('  Score     : %.2f  (time + 5×exits + 10×collisions)\n', results.score);
-    end
-    fprintf('  Wall time : %.2f s\n', wallTime);
-    fprintf('============================================================\n\n');
+    if nargout == 0, clear results; end
 
-    % Return nothing (suppress ans output) if called without assignment
-    if nargout == 0
-        clear results;
+    % ==================================================================== %
+    function r = runOne(name, headless, quiet)
+        course = loadPath(name);
+        clear controller                              % fresh persistent variables every run
+        r = RaceSimulation(course, car, @controller, config, struct('headless', headless, 'dt', opt.DT));
+        b = benchmarkTime(car, course);
+        r.benchmark = b.time;
+        r.benchmarkEnergyWh = b.energyWh;
+        tref = practiceReference(name);
+        if r.finished && ~isnan(tref)
+            r.score = min(120, 100 * tref / r.totalTime);
+        else
+            r.score = 0;
+        end
+        r.referenceTime = tref;
+        if quiet, return; end
+        fprintf('\n============================================================\n');
+        fprintf('  AI GRAND PRIX - %s   |   %s\n', course.name, car.team);
+        fprintf('------------------------------------------------------------\n');
+        if r.dnf
+            fprintf('  Result     : DNF - %s\n', r.dnfReason);
+        else
+            fprintf('  Result     : finished\n');
+            fprintf('  Time       : %.2f s', r.time);
+            if numel(r.lapTimes) > 1, fprintf('   (laps: %s)', strjoin(compose('%.2f', r.lapTimes), ', ')); end
+            fprintf('\n  Penalties  : +%d s  (off-track %d x 5, barrier %d x 10', r.penalty, r.nOffTrack, r.nBarrier);
+            if r.stopInRunoff, fprintf(', stopped past the box +3'); end
+            fprintf(')\n  Total      : %.2f s\n', r.totalTime);
+        end
+        fprintf('  Energy     : %.1f Wh used, %.0f %% left\n', r.energyUsedWh, 100 * r.batteryLeftFrac);
+        fprintf('  Benchmark  : %.2f s  (estimate for YOUR car on the centreline)', r.benchmark);
+        if r.finished, fprintf('  -> efficiency %.0f %%', 100 * r.benchmark / r.totalTime); end
+        if ~isnan(tref), fprintf('\n  Score      : %.1f  (reference %.2f s)', r.score, tref); end
+        fprintf('\n============================================================\n\n');
     end
-
 end

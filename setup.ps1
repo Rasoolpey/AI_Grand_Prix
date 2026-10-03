@@ -523,7 +523,7 @@ getattr(importlib.import_module(mod), func)()
         Remove-Item $mpTmp -Recurse -Force -ErrorAction SilentlyContinue
         Set-Content -Path $mpStamp -Value $Pins.MattPocockSha -Encoding ASCII
     }
-    Ok 'Skills: AI_Tools -> research-question (+ grill-me, grilling), literature-search, literature-review, research-report | AI_Grand_Prix -> race-debrief'
+    Ok 'Skills: AI_Tools -> research-question (+ grill-me, grilling), literature-search, literature-review, research-report | AI_Grand_Prix -> race-debrief, car-design-review'
 
     # ================================================================ 8. Self-test
     Step 8 'Self-test: talking to every MCP server like Antigravity will'
@@ -552,7 +552,7 @@ getattr(importlib.import_module(mod), func)()
             $eval  = $tools | Where-Object { $_.name -eq 'evaluate_matlab_code' } | Select-Object -First 1
             if (-not $eval) { throw 'evaluate_matlab_code tool not offered' }
             $code = "cd('$($RaceDir -replace "'", "''")'); r = practiceRace('Headless', true); " +
-                    "fprintf('AIW_RESULT lap=%d time=%.2f score=%.2f\n', r.lapCompleted, r.lapTime, r.score);"
+                    "fprintf('AIW_RESULT finished=%d time=%.2f score=%.2f\n', r.finished, r.totalTime, r.score);"
             # Fill the tool's required inputs: the code, plus any folder/path argument.
             $toolArgs = @{}
             foreach ($req in @($eval.inputSchema.required)) {
@@ -562,8 +562,8 @@ getattr(importlib.import_module(mod), func)()
             if ($toolArgs.Count -eq 0) { $toolArgs['code'] = $code }
             $res  = Send-McpRequest $s 'tools/call' @{ name = 'evaluate_matlab_code'; arguments = $toolArgs } 420
             $text = Get-ToolText $res
-            if ($text -match 'AIW_RESULT lap=1 time=([\d.]+) score=([\d.]+)') {
-                Ok "MATLAB via MCP works - baseline lap $($Matches[1]) s, score $($Matches[2])"
+            if ($text -match 'AIW_RESULT finished=1 time=([\d.]+) score=([\d.]+)') {
+                Ok "MATLAB via MCP works - baseline race $($Matches[1]) s, score $($Matches[2])"
             } elseif ($text -match '(?i)licen[cs]') {
                 Warn "MATLAB has no licence on this account. Open MATLAB once, sign in, then re-run setup. Log: $LogDir"
             } elseif ($text -match 'AIW_RESULT') {

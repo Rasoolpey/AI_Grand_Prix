@@ -1,48 +1,21 @@
-# Submissions Folder
+# submissions/ (instructor, race day)
 
-This folder holds team controller submissions for the championship evaluation.
+Unpacked team submissions live here; everything except this README is git-ignored.
 
-## Expected Structure
+## Race-day pipeline
 
-```
-submissions/
-  TeamAlpha/
-    controller.m       ← required
-    robotConfig.m      ← optional (defaults used if missing)
-  TeamBeta/
-    controller.m
-    robotConfig.m
-  ...
-```
-
-## How to Submit
-
-1. Create a folder with your team name (no spaces, e.g. `TeamAlpha`)
-2. Copy your `student/controller.m` into it
-3. Copy your `student/robotConfig.m` into it (optional but recommended)
-
-## How the Evaluator Uses These Files
-
-The instructor runs:
 ```matlab
-evaluateAll('mystery')
+cd instructor/race; addpath(pwd, fullfile(pwd, 'controllers'), fullfile(pwd, 'tests')); setupPaths();
+F = makeFinals(<secret seed>);                 % build + verify the final paths, measure T_ref (private)
+T = collectSubmissions('<shared folder>');      % unzip submission_<team>.zip here, scan the code
+[S, R] = qualify();                             % every team, every path, own MATLAB process + wall-clock limit
+raceDay                                         % recorded broadcast, path leaderboards, standings
+raceDay('Static', true)                         % fallback: tables only
 ```
 
-Each team's `controller.m` is called in isolation. The `controller(obs, config)` interface is identical to the one you use in `practiceRace`. Your controller will run on the **mystery track** — a different layout that tests whether your solution generalises beyond the practice circuit.
+Each `<team>/` folder holds the team's `carDesign.m`, `controller.m`, `robotConfig.m` and `manifest.json`
+(written by `submitCar`). Flagged code (system calls, file writes, eval, ...) is listed by `collectSubmissions` and skipped
+by `qualify` until you have read it and pass `'AllowFlagged', ["TeamName"]`. Separate processes contain crashes and hangs;
+they are not a security sandbox.
 
-## Scoring
-
-```
-Score = LapTime  +  5 × OffTrackExits  +  10 × BarrierContacts
-```
-
-- **Lower = better**
-- DNF if the lap is not completed within 180 seconds
-- DNF teams are ranked last
-
-## Tips for a Good Submission
-
-- Run `practiceRace('Headless', true)` at least 3 times before submitting
-- Use `plotLap` to check your cross-track error stays inside the boundaries
-- Ask your agent: *"Review my controller for anything that might fail on an unseen track"*
-- Avoid hard-coded coordinates or constants that only work for the practice circuit
+Rehearsal with fake teams: `inbox = makeRehearsal(30); collectSubmissions(inbox); qualify(); raceDay('SaveFrames', 'frames')`.

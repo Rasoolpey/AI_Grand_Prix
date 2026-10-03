@@ -63,3 +63,7 @@ lapPlot.png
 # Generated per machine by setup.ps1 (contains local paths)
 .agents/mcp_config.json
 .agents/mcp_config.json.bak
+
+# Local submission zips (submitCar) and the per-event shared-folder setting
+submission/
+submitFolder.txt

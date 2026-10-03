@@ -17,10 +17,10 @@ Before your agent touches any code, it should fully understand the project. An a
 ```
 Read and understand the entire project before making any changes.
 Specifically:
-- Read README.md to understand the competition
-- Read student/controller.m to understand the interface
+- Read README.md to understand the competition, the paths and the scoring
+- Read PHYSICS.md to understand the equations
+- Read student/carDesign.m and student/controller.m to understand the interface
 - Inspect the obs struct fields and what each means
-- Read simulator/Vehicle.m to understand physical constraints
 - Confirm which files you are and are not allowed to modify
 
 Do not write any code yet. Report back what you found.
@@ -65,15 +65,14 @@ Use this at the **start of every session**.
 ```
 Read the entire project before doing anything.
 
-1. Read README.md — understand the competition rules and scoring
-2. Read student/controller.m — understand the controller interface in detail
-3. Read simulator/RaceSimulation.m — understand how the simulation calls the controller
-4. Read simulator/Vehicle.m — identify all physical constraints I cannot exceed
+1. Read README.md — the parts, the paths, the rules and the scoring
+2. Read PHYSICS.md — the nine equations
+3. Read student/carDesign.m and student/controller.m — the interface in detail
+4. Run garage and summarise my car's numbers
 
 After reading, summarise:
-- What inputs does my controller receive?
-- What outputs must it produce?
-- What physical limits exist that I cannot change?
+- Which part of my car limits me on each path, and why (name the equation)?
+- What inputs does my controller receive and what must it produce?
 - Which files am I allowed to modify?
 ```
 
@@ -85,8 +84,9 @@ Use this when you don't yet know which algorithm to use.
 
 ```
 I need an autonomous controller for a virtual race car.
-The controller receives: position, heading, speed, upcoming centreline points, 
-track width, and timestep.
+The controller receives: position, heading, speed, upcoming centreline points
+(with grade and a wet flag), the car's physical parameters, battery energy and
+the path's progress (see README.md).
 
 Propose THREE different steering control strategies suitable for this project.
 For each one:
@@ -115,10 +115,9 @@ Requirements:
 - Add clear comments explaining each calculation
 - Keep the implementation in a single function for now
 
-After implementing, run practiceRace and report:
-- Did the car complete a lap?
-- What was the lap time?
-- Were there any track exits?
+After implementing, run practiceRace('Path', 'all') and report for each path:
+- Did the car finish? Time, penalties, energy used?
+- The overall score?
 ```
 
 ---
@@ -132,8 +131,8 @@ The car is leaving the track on sharp corners.
 
 1. Run practiceRace in headless mode to get simulation data
 2. Run plotLap to generate diagnostic plots
-3. Look at the steering angle vs. curvature plot — is steering saturating?
-4. Look at the speed profile — is the car entering corners too fast?
+3. Look at the grip-use trajectory — where is the car at the limit or understeering?
+4. Look at speed vs the eq. 6 corner limit — is the car entering corners too fast?
 5. Check whether the preview points correctly predict the upcoming corner
 
 Based on the data (not guessing), identify the root cause and propose 
@@ -147,16 +146,16 @@ one targeted fix. Explain WHY this fix should help before implementing it.
 Use this only once your car reliably completes laps without going off-track.
 
 ```
-The car completes the track but is slow. Current lap time: [X seconds].
+The car finishes every path but is slow. Current times: [X, Y, Z seconds].
 
 I want to improve speed on straights without sacrificing corner stability.
 
 1. Run practiceRace and examine the speed profile
 2. Identify sections where the car is travelling well below the speed limit
-3. Propose a specific speed control improvement using upcoming curvature from 
-   previewPoints to detect when we are on a straight vs. approaching a corner
-4. Implement the change and run practiceRace again
-5. Compare lap times and report whether any new track exits occurred
+3. Propose a speed plan: the safe corner speed from equation 6 at every preview
+   point, and a braking curve so the car reaches it in time (PHYSICS.md)
+4. Implement the change and run practiceRace('Path', 'all') again
+5. Compare times and report whether any new penalties occurred on any path
 
 Do not just increase maxSpeed. Think about WHERE to be fast vs. WHERE to brake.
 ```
@@ -165,7 +164,7 @@ Do not just increase maxSpeed. Think about WHERE to be fast vs. WHERE to brake.
 
 ### 🌍 Pattern 6 — Check for overfitting (important!)
 
-Use this before the final submission. The mystery track will catch overfitted solutions.
+Use this before the final submission. The final paths are new layouts: they will catch overfitted solutions.
 
 ```
 Review student/controller.m critically.
@@ -179,8 +178,8 @@ Check for any code that:
 For each suspicious item, explain whether it is a track-specific hack or a 
 general engineering decision.
 
-Then propose changes to make the controller more general. The final race uses 
-a completely different track — this controller must work on any track.
+Then propose changes to make the controller more general. The final race uses
+new layouts — this controller must work on any path.
 ```
 
 ---
@@ -193,10 +192,10 @@ Use this to give the agent data to work with rather than guessing.
 Run practiceRace in headless mode, then run plotLap.
 
 Analyse the resulting plots:
-1. Trajectory vs centreline — is the car cutting corners? hugging the inside?
-2. Speed profile — where is it fastest/slowest? Does it match the curvature?
-3. Steering angle — is it smooth or oscillating? Does it saturate frequently?
-4. Any correlation between high steering angle and track exits?
+1. Grip use — where is the car at the limit? any understeer?
+2. Speed vs the eq. 6 limit and the benchmark — where is time lost?
+3. Battery — does the energy last? is the car wasting it?
+4. Friction circle — braking and turning at the same time?
 
 Based on this analysis, identify the single most impactful thing to fix next.
 ```
@@ -208,18 +207,15 @@ Based on this analysis, identify the single most impactful thing to fix next.
 Use this in the last 10 minutes before code freeze.
 
 ```
-Run practiceRace 3 times and record the results.
+Run practiceRace('Path', 'all') and record, for each path:
+- Time, penalties, energy, score
+- The overall score (0.6 × mean + 0.4 × min)
 
-For each run:
-- Lap time
-- Number of track exits
-- Computed score (lap time + 5 × exits)
-
-Then review the controller for anything that might fail on an unseen track:
+Then review the controller for anything that might fail on a new layout:
 - Does it make any assumptions that won't generalise?
 - Are there any edge cases that could cause a crash on a different layout?
 
-Give me a summary: is this controller ready for the mystery track?
+Give me a summary: is this car ready for the final paths? Then run submitCar.
 ```
 
 ---
@@ -254,7 +250,7 @@ These are the most common mistakes. Avoid them.
 ```
 ❌ "The car crashed. Fix it."
 ✅ "The car crashed on corner 3. Run plotLap and diagnose the speed entering that 
-    corner. Show me the steering angle trace. Then propose a fix based on what 
+    corner. Show me the grip use and the speed vs the eq. 6 limit. Then propose a fix based on what 
     you see in the data."
 ```
 
@@ -269,12 +265,22 @@ These are the most common mistakes. Avoid them.
 
 ---
 
-### ❌ Ignoring the mystery track
+### ❌ Ignoring the final paths
 
 ```
-❌ Optimising purely for the practice track layout.
-✅ Regularly ask: "Will this work on a track with different corner radii and 
-    directions?"
+❌ Optimising purely for the practice layouts.
+✅ Regularly ask: "Will this work on a path with different corner radii,
+    directions and straight lengths?"
+```
+
+---
+
+### ❌ Changing parts without a reason
+
+```
+❌ "Put the biggest motor in."
+✅ "What would the 5.5 kW motor gain on the drag strip and cost on the endurance?
+    Use the car-design-review skill and show me the numbers first."
 ```
 
 ---
@@ -286,13 +292,13 @@ Your AI agent has these **tools** available via MCP:
 | Tool | What it does |
 |---|---|
 | Read file | Read any file in the project |
-| Write file | Edit `student/controller.m` and `student/robotConfig.m` |
-| Run MATLAB | Execute `practiceRace`, `plotLap`, `testMCP`, or any MATLAB command |
+| Write file | Edit `student/carDesign.m`, `student/controller.m` and `student/robotConfig.m` |
+| Run MATLAB | Execute `garage`, `practiceRace`, `plotLap`, `testMCP`, or any MATLAB command |
 | Get output | Read MATLAB console output and return it to you |
 
 The agent **cannot** (and should not):
 - Modify files in `simulator/`
-- Access the mystery track
+- Access the final paths
 - Change the vehicle physics
 - Connect to external internet resources
 
@@ -300,7 +306,7 @@ The agent **cannot** (and should not):
 
 ## Tips for Getting the Best Results
 
-1. **Be specific about constraints** — "don't exceed 2 track exits" is clearer than "don't go off track"
+1. **Be specific about constraints** — "no penalties on any path" is clearer than "don't go off track"
 2. **Give the agent context** — paste the MATLAB output into the chat if it didn't run it itself
 3. **Ask for reasoning** — "explain why this change should help before implementing it"
 4. **Challenge the output** — "are there any situations where this would fail?"
@@ -312,11 +318,11 @@ The agent **cannot** (and should not):
 ## A Good First 15-Minute Workflow
 
 ```
-Minute 0-3:   Use Pattern 1 — understand the project
-Minute 3-6:   Use Pattern 2 — investigate approaches
-Minute 6-10:  Choose one approach, use Pattern 3 — implement it conservatively
-Minute 10-13: Run practiceRace — does it complete a lap?
-Minute 13-15: If yes → Pattern 5 (speed). If no → Pattern 4 (diagnose).
+Minute 0-3:   Use Pattern 1 — understand the project and your car
+Minute 3-6:   car-design-review — a first design, with the trade-off written down
+Minute 6-10:  Pattern 2 — investigate controller approaches; choose one
+Minute 10-13: Pattern 3 — implement it conservatively; run all paths
+Minute 13-15: If all finish → Pattern 5 (speed). If not → Pattern 4 / race-debrief.
 ```
 
 ---

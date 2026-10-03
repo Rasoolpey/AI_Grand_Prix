@@ -2,6 +2,43 @@
 
 Students follow the workshop [README.md](../README.md). This page covers what `setup.ps1` does, so you can support students.
 
+## MATLAB requirements and installation checks
+
+- Students need installed, licensed **base MATLAB**. No Simulink, Control System Toolbox, Robotics System Toolbox,
+  Statistics and Machine Learning Toolbox, or separately installed MATLAB add-on is required by the current race code.
+  MATLAB Copilot is optional.
+- **Parallel Computing Toolbox is optional for the instructor**: it speeds up `balanceSweep`. Without it, the `parfor`
+  loop runs serially. Qualification uses separate MATLAB processes rather than a parallel pool.
+- The installer selects the newest installed MATLAB, or the folder specified by `AIW_MATLAB_ROOT`.
+  Its MCP self-test uses the current simulator's `finished`, `totalTime`, and `score` result fields.
+- Verified on this machine on **2026-10-03**, MATLAB **R2026b**, with only MATLAB and MATLAB Copilot installed:
+  **24/24 physics and rule tests passed**; all three student baseline paths finished with zero penalties
+  (drag 22.37 s, technical 54.00 s, endurance 278.28 s; overall 47.70).
+  The endurance practice path uses a **360 s simulated-time limit**, leaving the baseline about 82 s of margin.
+  Garage, lap-report and race-HUD figures rendered; a one-design, three-path balance sweep completed without
+  Parallel Computing Toolbox. Dependency analysis reported MATLAB only; the runtime checks provide additional evidence
+  because dependency analysis can miss dynamically selected functions or unavailable products.
+- The pinned **MATLAB MCP server v0.14.0** was tested separately against R2026b: five tools were offered and the
+  technical baseline finished in 54.00 s through `evaluate_matlab_code`. The local per-project configs point explicitly
+  to R2026b. Loading those configs in Antigravity still needs an app check.
+
+To repeat the installation check from the repository root in MATLAB:
+
+```matlab
+addpath('instructor/race/tests');
+report = checkInstallation();
+```
+
+To install/check only the MATLAB MCP connection and update the two local project configs, from PowerShell at the repository root:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\instructor\check-matlab-connection.ps1 -MatlabRoot "C:\Program Files\MATLAB\R2026b"
+```
+
+The process-only execution-policy setting leaves the system policy unchanged. The connection script reuses the installer's
+protocol client, preserves other configured MCP servers, and writes only inside this workshop. It does not install the
+Scholar, Scopus or MarkItDown servers. Results, logs and figure checks are in the git-ignored `.tools/log/` folder.
+
 ## Distribution
 - **One repo**, `github.com/Rasoolpey/AI_Grand_Prix` (public), mirrors this folder: `README.md`, `setup.ps1`, `remove-keys.ps1`,
   `AI_Tools/` (Part 1), `AI_Grand_Prix/` (Part 2) and `instructor/`. `setup.ps1` downloads one zip of `main` and copies only
@@ -17,7 +54,7 @@ AI_Workshop\
                    1_topic\ … 6_report\ (fixed result folders, pre-filled templates)
                    .agents\mcp_config.json (matlab, google-scholar, scopus, markitdown)
                    .agents\skills\ (research-question, grill-me, grilling, literature-search, literature-review, research-report)
-  AI_Grand_Prix\   .agents\mcp_config.json (matlab) · .agents\skills\race-debrief
+  AI_Grand_Prix\   .agents\mcp_config.json (matlab) · .agents\skills\ (race-debrief, car-design-review)
   .tools\ (hidden) uv 0.12.22 · Python 3.12 · MCP servers (matlab v0.14.0, Scholar @738d60a, Scopus @4968cc6, markitdown 0.0.1a7) · log\
 ```
 Nothing global: no `~/.gemini` config, no user environment variables, no PATH change. Uninstall = delete `AI_Workshop` + the two desktop shortcuts.
