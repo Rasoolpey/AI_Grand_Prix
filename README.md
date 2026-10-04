@@ -27,21 +27,20 @@ no Simulink or additional toolboxes are required. MATLAB Copilot is optional. Th
    ```powershell
    irm https://raw.githubusercontent.com/Rasoolpey/AI_Grand_Prix/main/setup.ps1 | iex
    ```
-   It uses the files you just extracted and installs everything into **`C:\Users\<your name>\AI_Workshop`**: that is the
-   folder you work in from now on. The downloaded `AI_Grand_Prix-main` folder is not changed; you can delete it afterwards.
-   (To install somewhere else, run `$env:AIW_DIR = "D:\AI_Workshop"` first in the same window. Keep the path short:
-   Windows limits path length.)
+   It installs everything **in this folder**: `Documents\AI_Grand_Prix-main` is the folder you work in from now on. Don't
+   move or rename it after setup (the tools are set up for this path; if you do, run setup again in the new place).
 5. Paste your Scopus key when asked (it stays hidden; that's normal). Press **Enter** to skip the institution token.
    No key yet? Press Enter; you can paste it later into `AI_Tools\my_keys.env`.
 6. Wait for **ALL SET!** The last check starts MATLAB and drives a test race, which takes 1–3 minutes.
 
-You now have, in `C:\Users\<your name>\`:
+You now have, in `Documents\`:
 ```
-AI_Workshop\
+AI_Grand_Prix-main\
   README.md        this guide
   remove-keys.ps1  clears your key at the end
-  AI_Tools\        Part 1   (the keys: AI_Tools\my_keys.env)
+  AI_Tools\        Part 1   (your Scopus key: AI_Tools\my_keys.env)
   AI_Grand_Prix\   Part 2
+  instructor\      for the instructor (you can ignore it)
 ```
 Nothing else is installed (the tools sit in a hidden `.tools` folder), apart from the Antigravity extension in your VS Code.
 
@@ -49,7 +48,7 @@ Nothing else is installed (the tools sit in a hidden `.tools` folder), apart fro
 
 ## 2. Part 1 — AI tools for research
 
-**Open the folder:** in VS Code, *File → Open Folder* → `AI_Workshop\AI_Tools` (or the desktop shortcut **AI Workshop – Part 1 AI Tools**).
+**Open the folder:** in VS Code, *File → Open Folder* → `Documents\AI_Grand_Prix-main\AI_Tools` (or the desktop shortcut **AI Workshop – Part 1 AI Tools**).
 
 **Check:** in the Antigravity panel, the list of **MCP servers** shows `matlab`, `google-scholar`, `scopus`, `markitdown`.
 
@@ -75,7 +74,7 @@ your rules override the defaults.
 
 ## 3. Part 2 — AI Grand Prix
 
-**Open the folder:** in VS Code, `AI_Workshop\AI_Grand_Prix` (or **AI Workshop – Part 2 Grand Prix**). The Antigravity panel's MCP servers list shows `matlab`.
+**Open the folder:** in VS Code, `Documents\AI_Grand_Prix-main\AI_Grand_Prix` (or **AI Workshop – Part 2 Grand Prix**). The Antigravity panel's MCP servers list shows `matlab`.
 
 You build an electric race car from parts (`student\carDesign.m`, budget 80 credits) and write its driver
 (`student\controller.m`). Start with:
@@ -106,9 +105,9 @@ The institution token is only needed **off campus** without the VPN (ask the lib
 
 ## 5. Finished? (shared PC)
 ```powershell
-& "$env:USERPROFILE\AI_Workshop\remove-keys.ps1"
+& "$env:USERPROFILE\Documents\AI_Grand_Prix-main\remove-keys.ps1"
 ```
-Or delete the `AI_Workshop` folder and the two desktop shortcuts.
+Or delete the `AI_Grand_Prix-main` folder and the two desktop shortcuts.
 
 ---
 
@@ -119,7 +118,7 @@ Or delete the `AI_Workshop` folder and the two desktop shortcuts.
 | Anything went wrong in setup | Run the setup command again. It's safe and keeps your work. |
 | `MATLAB has no licence` | Open MATLAB once normally, sign in, then run setup again. |
 | `Scopus rejected the key` | Check `AI_Tools\my_keys.env`. Off campus you need the VPN or an institution token. |
-| A tool is missing in the Antigravity panel | Open the **part folder** (`AI_Tools` or `AI_Grand_Prix`) in VS Code, not `AI_Workshop` itself; then *Reload Window*. |
+| A tool is missing in the Antigravity panel | Open the **part folder** (`AI_Tools` or `AI_Grand_Prix`) in VS Code, not `AI_Grand_Prix-main` itself; then *Reload Window*. |
 | No Antigravity panel in VS Code | Install the extension: *Extensions* (`Ctrl+Shift+X`) → `Google Antigravity` (publisher Google) → *Install*. |
 | Still stuck | Raise your hand and show the yellow `[!!]` lines. |
 
@@ -140,23 +139,23 @@ No admin rights, Docker, Git or Python are needed. The installer adds the Google
    - More than one MATLAB? Choose one with `$env:AIW_MATLAB_ROOT = "C:\Program Files\MATLAB\R2026b"`.
 2. **Read the installer's summary.** Expect `ALL SET!`, a line `MATLAB via MCP works - baseline race ...`, a line
    `Google Antigravity extension installed` (or `already installed`), and no yellow `[!!]` lines.
-3. **Part 1 in VS Code:** open `AI_Workshop\AI_Tools`, open the Antigravity panel and sign in; its MCP servers list shows
+3. **Part 1 in VS Code:** open `AI_Grand_Prix-main\AI_Tools`, open the Antigravity panel and sign in; its MCP servers list shows
    `matlab`, `google-scholar`, `scopus`, `markitdown`; the agent finds the skills (ask it: `Which skills do you have?`).
    **Figure (PaperViz):** with a filled-in proposal, type `Run the research-figure skill` and check that the agent can generate
    an image itself (Antigravity's built-in image generation) and saves it in `5_proposal\figure\`.
    **Still unverified:** that the VS Code extension reads the workspace `.agents\skills\` folder like the app does.
-4. **Part 2 in VS Code:** open `AI_Workshop\AI_Grand_Prix`; the MCP servers list shows `matlab`; the agent lists
+4. **Part 2 in VS Code:** open `AI_Grand_Prix-main\AI_Grand_Prix`; the MCP servers list shows `matlab`; the agent lists
    `race-debrief` and `car-design-review`. Then ask the agent:
    ```
    Run testMCP, then garage, then practiceRace('Path', 'all') through MATLAB and report the results.
    ```
    Expected: every check `[OK]`; the baseline finishes all three paths with no penalties
    (about 22 s drag strip, 54 s technical, 278 s endurance; overall ≈ 48).
-5. **Graphics in MATLAB itself** (from `AI_Workshop\AI_Grand_Prix`): `garage`, `practiceRace` (animated race view with HUD),
+5. **Graphics in MATLAB itself** (from `AI_Grand_Prix-main\AI_Grand_Prix`): `garage`, `practiceRace` (animated race view with HUD),
    `r = practiceRace('Path', 'endurance', 'Headless', true); plotLap(r)`.
 6. **Agent loop:** `Run the race-debrief skill on the technical path.` It should run the race, write `lapPlot.png` and propose
    one change without editing anything until you agree.
-7. **Clean up:** run `remove-keys.ps1`, or delete `AI_Workshop` and the two desktop shortcuts.
+7. **Clean up:** run `remove-keys.ps1`, or delete `AI_Grand_Prix-main` and the two desktop shortcuts.
 
 **Instructor tools** (race day, tests, balance) are not copied to students. Clone the repo for those:
 ```powershell
@@ -165,4 +164,4 @@ git clone https://github.com/Rasoolpey/AI_Grand_Prix.git
 then, in MATLAB from the repo root: `addpath('instructor/race/tests'); report = checkInstallation();` (tests, baseline races and
 figures). Race-day steps: `instructor/race/submissions/README.md`. Setup details and troubleshooting: `instructor/SETUP_NOTES.md`.
 
-Please note anything that fails (the yellow `[!!]` lines and the log folder `AI_Workshop\.tools\log\`).
+Please note anything that fails (the yellow `[!!]` lines and the log folder `AI_Grand_Prix-main\.tools\log\`).

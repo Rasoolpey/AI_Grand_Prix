@@ -3,18 +3,20 @@
  setup.ps1 — AI Workshop one-command setup for Windows (VS Code + Google Antigravity extension)
 =============================================================================
 
- Paste this into PowerShell (no admin rights needed):
+ Download the repo ZIP, extract it (e.g. into Documents), open a terminal in the
+ extracted AI_Grand_Prix-main folder and paste (no admin rights needed):
 
      irm https://raw.githubusercontent.com/Rasoolpey/AI_Grand_Prix/main/setup.ps1 | iex
 
- SELF-CONTAINED: everything lives in ONE folder, %USERPROFILE%\AI_Workshop.
+ SELF-CONTAINED: everything lives in ONE folder: the extracted folder itself when
+ run inside it, otherwise %USERPROFILE%\AI_Workshop.
  Nothing is written to your global Antigravity settings, PATH or environment
  variables. The only thing outside the folder is the Google Antigravity
  extension, added to YOUR VS Code (per user, no admin).
  To uninstall, delete the folder and the two desktop shortcuts (and remove the
  extension in VS Code if you like).
 
-     AI_Workshop\
+     AI_Grand_Prix-main\  (or AI_Workshop\)
        AI_Tools\        Part 1 workspace: AI tools + research   (my_keys.env = YOUR Scopus key)
        AI_Grand_Prix\   Part 2 workspace: the race              (.agents\mcp_config.json + skills)
        .tools\          uv, a private Python, all MCP servers, logs (you never need to open this)
@@ -29,7 +31,7 @@
  Safe to run again — it never overwrites your own work.
 
  Optional settings (set BEFORE running, e.g.  $env:AIW_DIR = "D:\ai"):
-   AIW_DIR              workshop folder              (default %USERPROFILE%\AI_Workshop)
+   AIW_DIR              workshop folder              (default: the extracted folder, else %USERPROFILE%\AI_Workshop)
    AIW_MATLAB_ROOT      MATLAB folder, if auto-detect picks the wrong one
    AIW_SKIP_TEST=1      skip the self-test (MATLAB start-up takes ~1-2 min)
    AIW_LOCAL_WORKSHOP   copy AI_Tools + AI_Grand_Prix from this local folder instead of GitHub (testing)
@@ -44,7 +46,7 @@
 
 function Install-AIWorkshop {
     param(
-        [string]$WorkshopDir = $(if ($env:AIW_DIR) { $env:AIW_DIR } else { Join-Path $env:USERPROFILE 'AI_Workshop' }),
+        [string]$WorkshopDir = $env:AIW_DIR,
         [string]$MatlabRoot  = $env:AIW_MATLAB_ROOT,
         [string]$Branch      = $(if ($env:AIW_REPO_BRANCH) { $env:AIW_REPO_BRANCH } else { 'main' }),
         [switch]$SkipSelfTest = ($env:AIW_SKIP_TEST -eq '1')
@@ -71,11 +73,22 @@ function Install-AIWorkshop {
     $RepoName    = 'AI_Grand_Prix'
     # One repo holds the whole workshop: README, AI_Tools/ (Part 1), AI_Grand_Prix/ (Part 2), instructor/ (not copied).
     $WorkshopZip = "https://github.com/Rasoolpey/AI_Grand_Prix/archive/refs/heads/$Branch.zip"
+    # Run inside the extracted repo zip (lab PCs have no git)? Then install IN PLACE: that folder becomes the
+    # workshop folder. "Extract All" often nests the folder, so look one level down too.
+    $here = $null
+    foreach ($cand in @((Get-Location).Path, (Join-Path (Get-Location).Path "$RepoName-$Branch"))) {
+        if ((Test-Path (Join-Path $cand 'setup.ps1')) -and (Test-Path (Join-Path $cand 'AI_Tools')) -and
+            (Test-Path (Join-Path $cand $RepoName))) { $here = (Resolve-Path $cand).Path.TrimEnd('\'); break }
+    }
+    if (-not $WorkshopDir) { $WorkshopDir = $(if ($here) { $here } else { Join-Path $env:USERPROFILE 'AI_Workshop' }) }
     # Everything lives under $WorkshopDir. Keep paths SHORT: Windows' 260-character limit breaks deep
     # Python packages, and the MATLAB MCP server creates a socket in the log folder (even smaller limit).
     $ToolsDir   = Join-Path $WorkshopDir '.tools'
     $McpDir     = Join-Path $ToolsDir 'mcp'
     $LogDir     = $(if ($env:AIW_LOG_DIR) { $env:AIW_LOG_DIR } else { Join-Path $ToolsDir 'log' })
+    # The MATLAB MCP server puts a socket (~31-character name) in the log folder, and Windows caps socket paths at
+    # ~108 characters. In a deep folder (nested zip, long user name, OneDrive Documents) use a short log folder.
+    if (-not $env:AIW_LOG_DIR -and $LogDir.Length -gt 70) { $LogDir = Join-Path $env:LOCALAPPDATA 'AIW\log' }
     $RaceDir    = Join-Path $WorkshopDir $RepoName
     $ResearchDir= Join-Path $WorkshopDir 'AI_Tools'
     $KeysFile   = Join-Path $ResearchDir 'my_keys.env'   # inside the Part 1 workspace, so students see it
@@ -319,33 +332,31 @@ SCOPUS_INST_TOKEN=$(V 'SCOPUS_INST_TOKEN')
     New-Item -ItemType Directory -Path $WorkshopDir, $McpDir, $LogDir -Force | Out-Null
     (Get-Item $ToolsDir -Force).Attributes = 'Hidden, Directory'   # keep the student's folder tidy
     # Workshop package: one download for both parts. Files a student already has are never overwritten.
-    # If the command runs inside the extracted repo zip (lab PCs have no git), use those files instead of
-    # downloading again. "Extract All" often nests the folder, so look one level down too.
+    # Inside the extracted zip, those files are used (no second download); in place, nothing is copied.
     $pkgIsLocal = $false
-    $here = $null
-    foreach ($cand in @((Get-Location).Path, (Join-Path (Get-Location).Path "$RepoName-$Branch"))) {
-        if ((Test-Path (Join-Path $cand 'setup.ps1')) -and (Test-Path (Join-Path $cand 'AI_Tools')) -and
-            (Test-Path (Join-Path $cand $RepoName))) { $here = $cand; break }
-    }
     if ($env:AIW_LOCAL_WORKSHOP) {
         $pkg = $env:AIW_LOCAL_WORKSHOP; $pkgIsLocal = $true
     } elseif ($here) {
         $pkg = $here; $pkgIsLocal = $true
-        Info "Using the workshop files in $here (no second download)"
+        if ($here -eq $WorkshopDir) { Info "Installing in this folder: $here" }
+        else { Info "Using the workshop files in $here (no second download)" }
     } else {
         $pkg = Join-Path $env:TEMP ("aiw_pkg_" + [guid]::NewGuid().ToString('N'))
         Expand-GitHubZip $WorkshopZip $pkg
     }
+    $inPlace = (Resolve-Path $pkg).Path.TrimEnd('\') -eq (Resolve-Path $WorkshopDir).Path.TrimEnd('\')
     if (-not (Test-Path (Join-Path $pkg 'AI_Tools'))) { throw "Workshop package has no AI_Tools folder ($pkg)." }
-    Copy-Missing (Join-Path $pkg 'AI_Tools') $ResearchDir
-    foreach ($f in 'README.md', 'remove-keys.ps1') {      # student guide + key removal: always refresh
-        if (Test-Path (Join-Path $pkg $f)) { Copy-Item (Join-Path $pkg $f) (Join-Path $WorkshopDir $f) -Force }
+    if (-not $inPlace) {
+        Copy-Missing (Join-Path $pkg 'AI_Tools') $ResearchDir
+        foreach ($f in 'README.md', 'remove-keys.ps1') {      # student guide + key removal: always refresh
+            if (Test-Path (Join-Path $pkg $f)) { Copy-Item (Join-Path $pkg $f) (Join-Path $WorkshopDir $f) -Force }
+        }
     }
     Ok "Part 1 (AI tools) ready at $ResearchDir"
 
     # Part 2: the race.
     if (-not (Test-Path (Join-Path $pkg $RepoName))) { throw "Workshop package has no $RepoName folder ($pkg)." }
-    Copy-Missing (Join-Path $pkg $RepoName) $RaceDir
+    if (-not $inPlace) { Copy-Missing (Join-Path $pkg $RepoName) $RaceDir }
     Ok "Part 2 (Grand Prix) ready at $RaceDir"
     if (-not $pkgIsLocal) { Remove-Item $pkg -Recurse -Force -ErrorAction SilentlyContinue }   # never delete a local copy
 
