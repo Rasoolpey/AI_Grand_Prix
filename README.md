@@ -18,8 +18,7 @@ no Simulink or additional toolboxes are required. MATLAB Copilot is optional. Th
    **Google Antigravity extension**: *Extensions* (`Ctrl+Shift+X`) → search `Google Antigravity` → the one by **Google** →
    *Install*. Open the Antigravity panel and sign in with your student Google account.
    (If you skip this, the installer in step 4 adds the extension for you; you still sign in yourself.)
-2. **Save the workshop key file:** your instructor shares **`workshop_keys.env`** (Teams / course page / USB). Save it in your
-   **Downloads** folder. It holds the Scopus key, so you don't sign up for anything.
+2. **Get a Scopus API key** at https://dev.elsevier.com → *I want an API key* (register with your university e-mail).
 3. **Download the workshop** (no Git needed): open https://github.com/Rasoolpey/AI_Grand_Prix → green **Code** button →
    **Download ZIP**. In File Explorer, right-click the zip → **Extract All…** → choose your **Documents** folder → *Extract*.
 4. **Open a terminal in that folder:** open **`Documents\AI_Grand_Prix-main`** (if you see another `AI_Grand_Prix-main`
@@ -32,8 +31,8 @@ no Simulink or additional toolboxes are required. MATLAB Copilot is optional. Th
    folder you work in from now on. The downloaded `AI_Grand_Prix-main` folder is not changed; you can delete it afterwards.
    (To install somewhere else, run `$env:AIW_DIR = "D:\AI_Workshop"` first in the same window. Keep the path short:
    Windows limits path length.)
-5. Setup finds `workshop_keys.env` (it says *Workshop keys found*) and asks **no key questions**. If it can't find the file, it
-   asks for the Scopus key instead: press **Enter**, save the file into Downloads, and run the setup command again.
+5. Paste your Scopus key when asked (it stays hidden; that's normal). Press **Enter** to skip the institution token.
+   No key yet? Press Enter; you can paste it later into `AI_Tools\my_keys.env`.
 6. Wait for **ALL SET!** The last check starts MATLAB and drives a test race, which takes 1–3 minutes.
 
 You now have, in `C:\Users\<your name>\`:
@@ -93,15 +92,15 @@ equations in `AI_Grand_Prix\PHYSICS.md`, and how to work with your agent in `AGE
 
 ---
 
-## 4. Your keys
+## 4. Your Scopus key
 
-Setup copies the workshop key into **`AI_Tools\my_keys.env`**. You see it in the VS Code file list when you open Part 1:
+It lives in **`AI_Tools\my_keys.env`**. You see it in the VS Code file list when you open Part 1:
 ```
-SCOPUS_API_KEY=...            (literature search)
-SCOPUS_INST_TOKEN=            (only off campus without the VPN)
+SCOPUS_API_KEY=your-key
+SCOPUS_INST_TOKEN=
 ```
-It is a shared workshop key: don't post it anywhere. It stops working when the workshop ends. To change a key: edit it
-after the `=`, save (Ctrl+S), then reload VS Code (`Ctrl+Shift+P` → *Reload Window*).
+To add or change it: paste it after the `=`, save (Ctrl+S), then reload VS Code (`Ctrl+Shift+P` → *Reload Window*).
+The institution token is only needed **off campus** without the VPN (ask the library).
 
 ---
 
