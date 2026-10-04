@@ -10,20 +10,22 @@
 
  SELF-CONTAINED: everything lives in ONE folder: the extracted folder itself when
  run inside it, otherwise %USERPROFILE%\AI_Workshop.
- Nothing is written to your global Antigravity settings, PATH or environment
- variables. The only thing outside the folder is the Google Antigravity
- extension, added to YOUR VS Code (per user, no admin).
- To uninstall, delete the folder and the two desktop shortcuts (and remove the
- extension in VS Code if you like).
+ Nothing is written to PATH or environment variables. Outside the folder:
+   - the Google Antigravity extension, added to YOUR VS Code (per user, no admin);
+   - the workshop's MCP servers, MERGED into %USERPROFILE%\.gemini\config\mcp_config.json
+     (Antigravity only loads MCP servers from that global file or from plugins, NOT from a
+     workspace .agents\mcp_config.json). Your own servers are kept; a .bak is saved first.
+ To uninstall, delete the folder and the two desktop shortcuts, and remove the entries
+ matlab, google-scholar, scopus, markitdown from that mcp_config.json (and the extension if you like).
 
      AI_Grand_Prix-main\  (or AI_Workshop\)
-       AI_Tools\        Part 1 workspace: AI tools + research   (my_keys.env = YOUR Scopus key)
-       AI_Grand_Prix\   Part 2 workspace: the race              (.agents\mcp_config.json + skills)
+       AI_Tools\        Part 1 workspace: AI tools + research   (my_keys.env = YOUR Scopus key; skills)
+       AI_Grand_Prix\   Part 2 workspace: the race              (skills)
        .tools\          uv, a private Python, all MCP servers, logs (you never need to open this)
 
  Steps:
    1. Find MATLAB                         6. Your Scopus key -> AI_Tools\my_keys.env
-   2. Workshop files                      7. Per-workspace Antigravity config + skills
+   2. Workshop files                      7. Global MCP config + per-workspace skills
    3. uv + private Python                 8. Self-test over MCP (incl. a baseline race)
    4. MATLAB MCP Server (MathWorks)       9. VS Code extension + desktop shortcuts
    5. Google Scholar, Scopus, MarkItDown
@@ -38,6 +40,9 @@
    AIW_REPO_BRANCH      GitHub branch to download   (default main)
    AIW_NO_SHORTCUTS=1   don't create desktop shortcuts
    AIW_NO_EXTENSION=1   don't install the Google Antigravity extension in VS Code
+   AIW_MCP_CONFIG       MCP config file to merge the servers into (default %USERPROFILE%\.gemini\config\mcp_config.json)
+   AIW_LOG_DIR          log folder (default .tools\log; %LOCALAPPDATA%\AIW\log when that path is too long)
+   AIW_KEYS_FILE        a workshop_keys.env to read the Scopus key from (default: searched for)
    SCOPUS_API_KEY / SCOPUS_INST_TOKEN
                         written to AI_Tools\my_keys.env instead of asking (otherwise a key
                         already in that file is re-used, or you are asked)
@@ -149,7 +154,10 @@ function Install-AIWorkshop {
         $cfg = $null
         if (Test-Path $Path) {
             Copy-Item $Path "$Path.bak" -Force
-            try { $cfg = Get-Content $Path -Raw | ConvertFrom-Json } catch { Warn "Could not read $Path - saved a .bak copy and rewrote it." }
+            $raw = Get-Content $Path -Raw
+            if ($raw -and $raw.Trim()) {
+                try { $cfg = $raw | ConvertFrom-Json } catch { Warn "Could not read $Path - saved a .bak copy and rewrote it." }
+            }
         }
         if (-not $cfg) { $cfg = New-Object PSObject }
         if (-not ($cfg.PSObject.Properties.Name -contains 'mcpServers') -or -not $cfg.mcpServers) {
@@ -473,8 +481,11 @@ getattr(importlib.import_module(mod), func)()
 
     # ================================================================ 6. Keys
     Step 6 "Your keys -> $KeysFile"
-    $researchCfg = Join-Path $ResearchDir '.agents\mcp_config.json'
-    $raceCfg     = Join-Path $RaceDir '.agents\mcp_config.json'
+    # Antigravity loads MCP servers ONLY from the global mcp_config.json (or plugins), not from a workspace
+    # .agents\mcp_config.json. Older versions of this script wrote those workspace files; step 7 removes them.
+    $globalCfg   = $(if ($env:AIW_MCP_CONFIG) { $env:AIW_MCP_CONFIG } else { Join-Path $env:USERPROFILE '.gemini\config\mcp_config.json' })
+    $researchCfg = Join-Path $ResearchDir '.agents\mcp_config.json'   # legacy, removed in step 7
+    $raceCfg     = Join-Path $RaceDir '.agents\mcp_config.json'       # legacy, removed in step 7
     $saved     = Read-KeysFile $KeysFile
     # Workshop key: the instructor can share ONE file, workshop_keys.env (same NAME=value lines as my_keys.env).
     # Saved next to the extracted zip, in Downloads, Documents or on the Desktop, it fills the Scopus key: no questions.
@@ -528,7 +539,7 @@ getattr(importlib.import_module(mod), func)()
     Ok "Saved: $KeysFile  (open it in any editor to change a key)"
 
     # ================================================================ 7. Antigravity config
-    Step 7 'Antigravity config + skills (per workspace, nothing global)'
+    Step 7 'Antigravity config: MCP servers (global) + skills (per workspace)'
     function New-MatlabServer([string]$Folder) {
         [ordered]@{
             command = $matlabMcpExe
@@ -537,7 +548,9 @@ getattr(importlib.import_module(mod), func)()
         }
     }
     $servers = [ordered]@{
-        'matlab' = New-MatlabServer $ResearchDir
+        # ONE matlab entry for both parts. It starts in the race folder so practiceRace/garage are on the path
+        # (the race skills do cd(fileparts(which('practiceRace')))). Research work can cd() anywhere.
+        'matlab' = New-MatlabServer $RaceDir
         'google-scholar' = [ordered]@{
             command = "$scholarVenv\Scripts\python.exe"
             args    = @($scholarRun)
@@ -553,10 +566,13 @@ getattr(importlib.import_module(mod), func)()
         }
     }
 
-    Merge-McpConfig $researchCfg $servers
-    Ok 'AI_Tools\.agents\mcp_config.json: matlab, google-scholar, scopus, markitdown'
-    Merge-McpConfig $raceCfg ([ordered]@{ 'matlab' = (New-MatlabServer $RaceDir) })
-    Ok 'AI_Grand_Prix\.agents\mcp_config.json: matlab'
+    Merge-McpConfig $globalCfg $servers
+    Ok "$globalCfg : matlab, google-scholar, scopus, markitdown (your other servers kept, backup: .bak)"
+    # Remove the per-workspace files written by older versions: Antigravity ignores them, and if a future
+    # version did read them each server would start twice.
+    foreach ($old in $researchCfg, $raceCfg) {
+        foreach ($f in $old, "$old.bak") { if (Test-Path $f) { Remove-Item $f -Force } }
+    }
 
     # Matt Pocock's "grilling" (+ its "grill-me" entry point), pinned, into the Part 1 workspace.
     $skillsDir = Join-Path $ResearchDir '.agents\skills'
@@ -641,7 +657,8 @@ After the 10th answer, stop: summarise what is settled, list anything still open
     # ================================================================ 9. VS Code extension + shortcuts
     Step 9 'VS Code: Antigravity extension + desktop shortcuts'
     # Students can't install apps on lab PCs, but VS Code is there and extensions install per user
-    # (no admin). The Google Antigravity extension reads the same .agents\ folder as the app.
+    # (no admin). The Google Antigravity extension reads skills from .agents\ and MCP servers from
+    # %USERPROFILE%\.gemini\config\mcp_config.json, the same as the app.
     $codeExe = @(
         (Join-Path $env:LOCALAPPDATA 'Programs\Microsoft VS Code\Code.exe'),
         (Join-Path $env:ProgramFiles 'Microsoft VS Code\Code.exe'),
@@ -722,11 +739,14 @@ After the 10th answer, stop: summarise what is settled, list anything still open
 
   NEXT STEPS
   ----------
-  1. In VS Code, open the folder for each part (File > Open Folder, or use the desktop shortcuts):
-       Part 1:  $ResearchDir        (tools: matlab, google-scholar, scopus, markitdown)
-       Part 2:  $RaceDir   (tools: matlab)
-  2. Open the Antigravity panel, sign in with your Google account, and check
-     its MCP servers list to see the tools.
+  1. If VS Code / Antigravity was already open, reload it (Ctrl+Shift+P -> "Reload Window") so it
+     picks up the MCP servers: matlab, google-scholar, scopus, markitdown (registered in
+     $globalCfg, available in every folder).
+  2. Open the folder for each part (File > Open Folder, or use the desktop shortcuts) to get its skills:
+       Part 1:  $ResearchDir        (research skills)
+       Part 2:  $RaceDir   (race-debrief, car-design-review)
+  3. Open the Antigravity panel, sign in with your Google account, and check
+     ... (Additional Options) > MCP Servers to see the tools.
 
   Your keys:     $KeysFile
   Student guide: $WorkshopDir\README.md

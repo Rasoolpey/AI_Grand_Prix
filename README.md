@@ -74,7 +74,7 @@ your rules override the defaults.
 
 ## 3. Part 2 — AI Grand Prix
 
-**Open the folder:** in VS Code, `Documents\AI_Grand_Prix-main\AI_Grand_Prix` (or **AI Workshop – Part 2 Grand Prix**). The Antigravity panel's MCP servers list shows `matlab`.
+**Open the folder:** in VS Code, `Documents\AI_Grand_Prix-main\AI_Grand_Prix` (or **AI Workshop – Part 2 Grand Prix**). The Antigravity panel's MCP servers list shows the same 4 servers as in Part 1.
 
 You build an electric race car from parts (`student\carDesign.m`, budget 80 credits) and write its driver
 (`student\controller.m`). Start with:
@@ -118,7 +118,8 @@ Or delete the `AI_Grand_Prix-main` folder and the two desktop shortcuts.
 | Anything went wrong in setup | Run the setup command again. It's safe and keeps your work. |
 | `MATLAB has no licence` | Open MATLAB once normally, sign in, then run setup again. |
 | `Scopus rejected the key` | Check `AI_Tools\my_keys.env`. Off campus you need the VPN or an institution token. |
-| A tool is missing in the Antigravity panel | Open the **part folder** (`AI_Tools` or `AI_Grand_Prix`) in VS Code, not `AI_Grand_Prix-main` itself; then *Reload Window*. |
+| A tool is missing in the Antigravity panel | *Reload Window* (`Ctrl+Shift+P`): VS Code must be reloaded after setup. Still missing? Run the setup command again. |
+| A skill is missing (the agent doesn't know `research-question` etc.) | Open the **part folder** (`AI_Tools` or `AI_Grand_Prix`) in VS Code, not `AI_Grand_Prix-main` itself. |
 | No Antigravity panel in VS Code | Install the extension: *Extensions* (`Ctrl+Shift+X`) → `Google Antigravity` (publisher Google) → *Install*. |
 | Still stuck | Raise your hand and show the yellow `[!!]` lines. |
 
@@ -144,7 +145,7 @@ No admin rights, Docker, Git or Python are needed. The installer adds the Google
    **Figure (PaperViz):** with a filled-in proposal, type `Run the research-figure skill` and check that the agent can generate
    an image itself (Antigravity's built-in image generation) and saves it in `5_proposal\figure\`.
    **Still unverified:** that the VS Code extension reads the workspace `.agents\skills\` folder like the app does.
-4. **Part 2 in VS Code:** open `AI_Grand_Prix-main\AI_Grand_Prix`; the MCP servers list shows `matlab`; the agent lists
+4. **Part 2 in VS Code:** open `AI_Grand_Prix-main\AI_Grand_Prix`; the MCP servers list shows the same 4 servers; the agent lists
    `race-debrief` and `car-design-review`. Then ask the agent:
    ```
    Run testMCP, then garage, then practiceRace('Path', 'all') through MATLAB and report the results.

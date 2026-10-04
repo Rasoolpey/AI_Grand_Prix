@@ -10,10 +10,15 @@ irm https://raw.githubusercontent.com/Rasoolpey/AI_Grand_Prix/main/setup.ps1 | i
 > **Key idea:** `setup.ps1` does **not** invent skills or configs. It
 > 1. **copies** what is committed in the repo (workspaces, skills, instructions),
 > 2. **installs** the MCP servers into a private `.tools\` folder, and
-> 3. **writes** a per-machine `.agents\mcp_config.json` into each workspace that points at those servers.
+> 3. **merges** those servers into the global `%USERPROFILE%\.gemini\config\mcp_config.json` (keeping the student's own
+>    servers, saving a `.bak` first).
 >
-> Nothing is written to global Antigravity settings, PATH or environment variables. The only thing outside the workshop
-> folder is the Google Antigravity extension, added to the student's VS Code (per user, no admin).
+> Why global: Antigravity loads MCP servers **only** from `~/.gemini/config/mcp_config.json` or from plugins. A workspace
+> `.agents\mcp_config.json` is ignored (skills in `.agents\skills\` *are* per workspace). **Found by testing** on a lab-style
+> PC (2026-10-04, VS Code extension 1.6.0), even though the extension's own README says a local `.agents/mcp_config.json`
+> works. Don't move the servers back into the workspaces without re-testing. Nothing is written to PATH or
+> environment variables. Outside the workshop folder there are only that MCP config and the Google Antigravity
+> extension, added to the student's VS Code (per user, no admin).
 
 ---
 
@@ -72,7 +77,8 @@ Files a student already has are **never overwritten** (`Copy-Missing`), so re-ru
 | Your own skills: `<workspace>\.agents\skills\<name>\SKILL.md` | You | ✅ Yes |
 | `grill-me`, `grilling` skills | Script (pinned commit of `mattpocock/skills`) | ❌ No |
 | `.tools\` (uv, Python, MCP servers, logs) | Script | ❌ No |
-| `<workspace>\.agents\mcp_config.json` (+ `.bak`) | Script (contains absolute local paths) | ❌ No – keep in `.gitignore` |
+| MCP server entries in `%USERPROFILE%\.gemini\config\mcp_config.json` | Script (absolute local paths, outside the repo) | ❌ No – never in the repo |
+| Legacy `<workspace>\.agents\mcp_config.json` (+ `.bak`) | Older script versions; the current one deletes them | ❌ No – keep in `.gitignore` |
 | `AI_Tools\my_keys.env` | You commit it as an **empty template**; setup fills the student's copy (asks for / finds the Scopus key) | ✅ Template only. With a real key **only on purpose** (a shared workshop key), and delete that key on the Elsevier portal afterwards |
 
 The root `.gitignore` already covers the generated files: `.tools/`, both workspaces' `.agents/mcp_config.json` (+ `.bak`),
@@ -114,14 +120,15 @@ Tips:
 
 ## 4. MCP servers installed by `setup.ps1`
 
-| Server | Workspace(s) | Source (pinned in `$Pins`) | Installed to |
+| Server | Registered in | Source (pinned in `$Pins`) | Installed to |
 |---|---|---|---|
-| `matlab` | AI_Tools, AI_Grand_Prix | `matlab/matlab-mcp-server` release `.exe` | `.tools\mcp\matlab\` |
-| `google-scholar` | AI_Tools | `JackKuo666/Google-Scholar-MCP-Server` (source + wrapper `run_server.py`) | `.tools\mcp\google-scholar\` |
-| `scopus` | AI_Tools | `JOSETRA44/scopus-mcp`, started via `run_with_keys.py` (loads `my_keys.env`) | `.tools\mcp\scopus\` |
-| `markitdown` | AI_Tools | PyPI `markitdown-mcp` | `.tools\mcp\markitdown\` |
+| `matlab` | global `mcp_config.json` | `matlab/matlab-mcp-server` release `.exe` | `.tools\mcp\matlab\` |
+| `google-scholar` | global `mcp_config.json` | `JackKuo666/Google-Scholar-MCP-Server` (source + wrapper `run_server.py`) | `.tools\mcp\google-scholar\` |
+| `scopus` | global `mcp_config.json` | `JOSETRA44/scopus-mcp`, started via `run_with_keys.py` (loads `my_keys.env`) | `.tools\mcp\scopus\` |
+| `markitdown` | global `mcp_config.json` | PyPI `markitdown-mcp` | `.tools\mcp\markitdown\` |
 
-The `matlab` entry is written separately for each workspace, with `--initial-working-folder` pointing at that workspace.
+There is **one** `matlab` entry, with `--initial-working-folder` set to `AI_Grand_Prix\`, so `practiceRace`/`garage` are on
+the MATLAB path for the race skills. Research work can `cd()` anywhere.
 
 ### Adding a new MCP server
 
@@ -136,14 +143,12 @@ Edit `setup.ps1` in three places:
    Save-Url "https://github.com/<org>/<repo>/releases/download/<tag>/<file>.exe" (Join-Path $McpDir 'my-server\my-server.exe')
    ```
    If the server needs an API key, start it through `run_with_keys.py` (like `scopus`) and add the key name to `Write-KeysFile`.
-3. **Register it** in step 7:
+3. **Register it** in step 7 (it is merged into the global `mcp_config.json`):
    ```powershell
    $servers['my-server'] = [ordered]@{
        command = "$myVenv\Scripts\my-mcp.exe"
        args    = @()
    }
-   # race workspace instead/as well:
-   # Merge-McpConfig $raceCfg ([ordered]@{ 'my-server' = ... })
    ```
 4. *(Optional)* Add the name to the self-test loop in step 8 so the script checks that it answers `tools/list`.
 
@@ -161,13 +166,13 @@ Edit `setup.ps1` in three places:
 | 4 | Downloads the MATLAB MCP server. |
 | 5 | Installs the Google Scholar, Scopus and MarkItDown servers (separate venvs). |
 | 6 | Scopus key: from an environment variable, a `workshop_keys*` file (next to the ZIP, or in Downloads/Documents/Desktop), the existing `my_keys.env`, or a prompt. Tests the key, then writes `AI_Tools\my_keys.env`. |
-| 7 | Writes `AI_Tools\.agents\mcp_config.json` (4 servers) and `AI_Grand_Prix\.agents\mcp_config.json` (matlab). Downloads the `grill-me` and `grilling` skills and appends the workshop's 10-question limit to `grilling`. |
+| 7 | Merges the 4 servers into `%USERPROFILE%\.gemini\config\mcp_config.json` (or `$env:AIW_MCP_CONFIG`) and deletes any legacy `<workspace>\.agents\mcp_config.json`. Downloads the `grill-me` and `grilling` skills and appends the workshop's 10-question limit to `grilling`. |
 | 8 | Self-test: talks MCP to each server; runs `practiceRace('Headless', true)` through MATLAB and expects `finished`, `totalTime` and `score` in the result. |
 | 9 | Installs the `google.google-antigravity` VS Code extension and creates 2 desktop shortcuts (one per workspace). |
 
 Optional switches (set before running):
 `AIW_DIR`, `AIW_MATLAB_ROOT`, `AIW_SKIP_TEST=1`, `AIW_LOCAL_WORKSHOP`, `AIW_REPO_BRANCH`, `AIW_NO_SHORTCUTS=1`,
-`AIW_NO_EXTENSION=1`, `AIW_LOG_DIR`, `AIW_KEYS_FILE`, `SCOPUS_API_KEY`, `SCOPUS_INST_TOKEN`.
+`AIW_NO_EXTENSION=1`, `AIW_LOG_DIR`, `AIW_KEYS_FILE`, `AIW_MCP_CONFIG`, `SCOPUS_API_KEY`, `SCOPUS_INST_TOKEN`.
 
 **Sharing one Scopus key for the class:** give students a file called `workshop_keys.env` containing
 `SCOPUS_API_KEY=...`. If it sits in Downloads, Documents, the Desktop or next to the ZIP, setup uses it without asking.
@@ -176,14 +181,14 @@ Optional switches (set before running):
 
 ## 6. Students: open the right folder ⚠️
 
-All configuration is **per workspace**: Antigravity reads `.agents\` in the folder that is open in VS Code, not in its
-subfolders. So:
+**MCP servers are global** (any folder, after a window reload). **Skills are per workspace**: Antigravity reads
+`.agents\skills\` in the folder that is open in VS Code, not in its subfolders. So:
 
 | Open this folder | You get |
 |---|---|
 | `AI_Grand_Prix-main\AI_Tools` | matlab, google-scholar, scopus, markitdown + the research skills |
-| `AI_Grand_Prix-main\AI_Grand_Prix` | matlab + race-debrief, car-design-review |
-| `AI_Grand_Prix-main` (the parent) | ❌ **Nothing**: no MCP servers, no skills |
+| `AI_Grand_Prix-main\AI_Grand_Prix` | matlab, google-scholar, scopus, markitdown + race-debrief, car-design-review |
+| `AI_Grand_Prix-main` (the parent) | the 4 MCP servers, but ❌ **no skills** |
 
 Use the desktop shortcuts created in step 9, or **File > Open Folder** on one of the two part folders. Then check
 **… (Additional Options) > MCP Servers** in the Antigravity panel to confirm that the servers are connected.
@@ -199,6 +204,8 @@ Use the desktop shortcuts created in step 9, or **File > Open Folder** on one of
 - [ ] `practiceRace('Headless', true)` runs headless and returns `finished`, `totalTime` and `score`.
 - [ ] All `$Pins` versions/SHAs have been tested together.
 - [ ] Clean test on a lab PC: download the ZIP → extract → run the one-liner inside `AI_Grand_Prix-main` → "ALL SET!".
+- [ ] After setup, `%USERPROFILE%\.gemini\config\mcp_config.json` lists matlab, google-scholar, scopus, markitdown, and no
+      `<workspace>\.agents\mcp_config.json` is left.
 - [ ] Open `AI_Tools` in VS Code → the MCP Servers list shows 4 servers, and the skills are offered.
 - [ ] Open `AI_Grand_Prix` → `matlab` is connected, and `race-debrief` works end to end.
 - [ ] Local testing without pushing: `$env:AIW_LOCAL_WORKSHOP = "<path to repo>"` before running the script.
@@ -209,8 +216,8 @@ Use the desktop shortcuts created in step 9, or **File > Open Folder** on one of
 
 | Symptom | Likely cause / fix |
 |---|---|
-| No MCP servers or skills in Antigravity | The parent folder is open. Open `AI_Tools` or `AI_Grand_Prix` instead (section 6). |
-| Servers still missing in the correct folder | Reload the window (Ctrl+Shift+P → Reload Window), then check **… > MCP Servers**. If this Antigravity version ignores workspace `.agents\mcp_config.json`, copy the `mcpServers` entries into `%USERPROFILE%\.gemini\config\mcp_config.json`. |
+| No MCP servers in Antigravity | Antigravity was open during setup: reload the window (Ctrl+Shift+P → Reload Window), then check **… > MCP Servers**. Make sure `%USERPROFILE%\.gemini\config\mcp_config.json` lists the 4 servers (re-run setup if not). |
+| No skills in Antigravity | The parent folder is open. Open `AI_Tools` or `AI_Grand_Prix` instead (section 6). |
 | `matlab` fails to start | MATLAB is not licensed or signed in for this user: open MATLAB once, sign in, then re-run setup. Logs are in `.tools\log`. |
 | MATLAB socket / path errors | The path is too long. The script falls back to `%LOCALAPPDATA%\AIW\log`; or set `$env:AIW_LOG_DIR` to a short path. |
 | Scopus returns 401/403 | Wrong key, or off campus: add `SCOPUS_INST_TOKEN` or connect to the VPN. Edit `AI_Tools\my_keys.env`, then reload. |

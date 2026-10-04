@@ -82,12 +82,14 @@ Documents\AI_Grand_Prix-main\   (in place; otherwise %USERPROFILE%\AI_Workshop\)
   README.md · remove-keys.ps1
   AI_Tools\        my_keys.env (Scopus key) · my_instructions.md (student overrides) · AGENTS.md (defaults)
                    1_topic\ … 6_report\ (fixed result folders, pre-filled templates)
-                   .agents\mcp_config.json (matlab, google-scholar, scopus, markitdown)
                    .agents\skills\ (research-question, grill-me, grilling, literature-search, literature-review, research-figure, research-report)
-  AI_Grand_Prix\   .agents\mcp_config.json (matlab) · .agents\skills\ (race-debrief, car-design-review)
+  AI_Grand_Prix\   .agents\skills\ (race-debrief, car-design-review)
   .tools\ (hidden) uv 0.12.22 · Python 3.12 · MCP servers (matlab v0.14.0, Scholar @738d60a, Scopus @4968cc6, markitdown 0.0.1a7) · log\
+%USERPROFILE%\.gemini\config\mcp_config.json   matlab, google-scholar, scopus, markitdown (merged in; other servers kept, .bak saved)
 ```
-Nothing global: no `~/.gemini` config, no user environment variables, no PATH change. Uninstall = delete the workshop folder + the two desktop shortcuts.
+**MCP servers are global** (Antigravity ignored a workspace `.agents\mcp_config.json` in our tests); **skills are per workspace**.
+No user environment variables, no PATH change. Uninstall = delete the workshop folder + the two desktop shortcuts, and remove the
+4 entries from that `mcp_config.json`.
 **Keys** live in `AI_Tools\my_keys.env`, inside the Part 1 workspace so students see it in VS Code's file list. The Scopus server
 is started through `.tools\mcp\run_with_keys.py`, which loads that file at start-up, so a changed key takes effect after reloading the VS Code window.
 
