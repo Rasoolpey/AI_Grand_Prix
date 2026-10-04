@@ -19,7 +19,7 @@ no Simulink or additional toolboxes are required. MATLAB Copilot is optional. Th
    *Install*. Open the Antigravity panel and sign in with your student Google account.
    (If you skip this, the installer in step 4 adds the extension for you; you still sign in yourself.)
 2. **Save the workshop key file:** your instructor shares **`workshop_keys.env`** (Teams / course page / USB). Save it in your
-   **Downloads** folder. It holds the keys for Scopus and the figure tools, so you don't sign up for anything.
+   **Downloads** folder. It holds the Scopus key, so you don't sign up for anything.
 3. **Download the workshop** (no Git needed): open https://github.com/Rasoolpey/AI_Grand_Prix → green **Code** button →
    **Download ZIP**. In File Explorer, right-click the zip → **Extract All…** → choose your **Documents** folder → *Extract*.
 4. **Open a terminal in that folder:** open **`Documents\AI_Grand_Prix-main`** (if you see another `AI_Grand_Prix-main`
@@ -33,7 +33,7 @@ no Simulink or additional toolboxes are required. MATLAB Copilot is optional. Th
    (To install somewhere else, run `$env:AIW_DIR = "D:\AI_Workshop"` first in the same window. Keep the path short:
    Windows limits path length.)
 5. Setup finds `workshop_keys.env` (it says *Workshop keys found*) and asks **no key questions**. If it can't find the file, it
-   asks for each key instead: press **Enter** at every question, save the file into Downloads, and run the setup command again.
+   asks for the Scopus key instead: press **Enter**, save the file into Downloads, and run the setup command again.
 6. Wait for **ALL SET!** The last check starts MATLAB and drives a test race, which takes 1–3 minutes.
 
 You now have, in `C:\Users\<your name>\`:
@@ -52,8 +52,7 @@ Nothing else is installed (the tools sit in a hidden `.tools` folder), apart fro
 
 **Open the folder:** in VS Code, *File → Open Folder* → `AI_Workshop\AI_Tools` (or the desktop shortcut **AI Workshop – Part 1 AI Tools**).
 
-**Check:** in the Antigravity panel, the list of **MCP servers** shows `matlab`, `google-scholar`, `scopus`, `markitdown`,
-`scidraw`, `paperviz`.
+**Check:** in the Antigravity panel, the list of **MCP servers** shows `matlab`, `google-scholar`, `scopus`, `markitdown`.
 
 **Your topic:** bring your own, or join the **topic pool** and draw one in class. Write it in `1_topic\my_topic.md`.
 
@@ -65,7 +64,7 @@ Then type these in the agent panel, one at a time. Each result lands in a fixed,
 | 2 | `Run the literature-search skill` | `2_search\papers.csv` (30–40 papers with links) |
 | 3 | *(you)* Download the PDFs you can, through the library | put them in `3_papers\pdf\` |
 | 4 | `Run the literature-review skill` | `4_review\` then `5_proposal\proposal.md` |
-| 5 | `Run the research-figure skill` (PaperViz, SciDraw AI or MATLAB draws the **Figure brief**) | `5_proposal\figure\` |
+| 5 | `Run the research-figure skill` (PaperViz, Google's figure method, draws the **Figure brief**; no key needed) | `5_proposal\figure\` |
 | 6 | `Run the research-report skill` | `6_report\report.md` |
 
 Want the agent to work differently (shorter review, only recent papers, another language)? Write it in **`my_instructions.md`**:
@@ -96,14 +95,12 @@ equations in `AI_Grand_Prix\PHYSICS.md`, and how to work with your agent in `AGE
 
 ## 4. Your keys
 
-Setup copies the workshop keys into **`AI_Tools\my_keys.env`**. You see it in the VS Code file list when you open Part 1:
+Setup copies the workshop key into **`AI_Tools\my_keys.env`**. You see it in the VS Code file list when you open Part 1:
 ```
 SCOPUS_API_KEY=...            (literature search)
 SCOPUS_INST_TOKEN=            (only off campus without the VPN)
-SCIDRAW_API_KEY=sd_...        (figures: SciDraw AI)
-GOOGLE_API_KEY=...            (figures: PaperViz, runs on Google Gemini)
 ```
-These are shared workshop keys: don't post them anywhere. They stop working when the workshop ends. To change a key: edit it
+It is a shared workshop key: don't post it anywhere. It stops working when the workshop ends. To change a key: edit it
 after the `=`, save (Ctrl+S), then reload VS Code (`Ctrl+Shift+P` → *Reload Window*).
 
 ---
@@ -145,9 +142,9 @@ No admin rights, Docker, Git or Python are needed. The installer adds the Google
 2. **Read the installer's summary.** Expect `ALL SET!`, a line `MATLAB via MCP works - baseline race ...`, a line
    `Google Antigravity extension installed` (or `already installed`), and no yellow `[!!]` lines.
 3. **Part 1 in VS Code:** open `AI_Workshop\AI_Tools`, open the Antigravity panel and sign in; its MCP servers list shows
-   `matlab`, `google-scholar`, `scopus`, `markitdown`, `scidraw`, `paperviz`; the agent finds the skills (ask it: `Which skills do you have?`).
-   **Figure tools** (with keys in `my_keys.env`): ask the agent `Run scidraw_credits and paperviz_check_setup`, then
-   `Use scidraw_generate_figure to draw a labelled block diagram of a PID speed controller` and check the file in `5_proposal\figure\`.
+   `matlab`, `google-scholar`, `scopus`, `markitdown`; the agent finds the skills (ask it: `Which skills do you have?`).
+   **Figure (PaperViz):** with a filled-in proposal, type `Run the research-figure skill` and check that the agent can generate
+   an image itself (Antigravity's built-in image generation) and saves it in `5_proposal\figure\`.
    **Still unverified:** that the VS Code extension reads the workspace `.agents\skills\` folder like the app does.
 4. **Part 2 in VS Code:** open `AI_Workshop\AI_Grand_Prix`; the MCP servers list shows `matlab`; the agent lists
    `race-debrief` and `car-design-review`. Then ask the agent:

@@ -1,2 +1,2 @@
 Figures for your proposal go here (PNG, JPG, SVG or PDF), made from the "Figure brief" in proposal.md
-by the research-figure skill (PaperViz, SciDraw AI or MATLAB). Existing files are never overwritten.
+by the research-figure skill (PaperViz). Existing files are never overwritten.

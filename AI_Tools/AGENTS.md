@@ -38,9 +38,9 @@ When the student asks for a step in plain words ("search for papers", "write my 
 | `scopus` | Search with citation counts: `scopus_search`, `scopus_get_abstract`, `scopus_get_citation_count` |
 | `google-scholar` | Broad search: `search_google_scholar_key_words`, `search_google_scholar_advanced` |
 | `markitdown` | PDF → text: `convert_to_markdown` with a `file:///` URI |
-| `paperviz` | Method/pipeline diagrams (Google PaperViz agents): `paperviz_generate_diagram`, `paperviz_check_job`, `paperviz_check_setup` |
-| `scidraw` | Scientific illustrations (SciDraw AI, costs credits): `scidraw_generate_figure`, `scidraw_check_job`, `scidraw_credits` |
-| `matlab` | Plots for the figure (research-figure skill), and the optional MATLAB experiment if the student asks |
+| `matlab` | Only for the optional MATLAB experiment, and only if the student asks |
+
+The figure (research-figure skill) needs no server: you draw it with your own built-in image generation.
 
 If a tool fails (no key, rate limit, no results), say so plainly and continue with the other source.
 
@@ -51,5 +51,5 @@ If a tool fails (no key, rate limit, no results), say so plainly and continue wi
 - Research gaps are **hypotheses**, not facts.
 
 ## 5. Keys (always applies)
-`my_keys.env` holds the student's keys (Scopus, SciDraw, Google AI Studio). **Never print, copy, summarise or move its contents**,
+`my_keys.env` holds the student's Scopus key. **Never print, copy, summarise or move its contents**,
 never put a key in any other file, and never ask the student to paste a key into the chat.

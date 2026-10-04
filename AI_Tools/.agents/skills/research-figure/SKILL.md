@@ -1,38 +1,43 @@
 ---
 name: research-figure
-description: Make the proposal's figure from the Figure brief in 5_proposal/proposal.md and save it in 5_proposal/figure/. Uses PaperViz (method/pipeline diagrams) or SciDraw AI (scientific illustrations), with MATLAB as the fallback. Use after literature-review has written the proposal, when the student asks for the figure.
+description: Make the proposal's figure with PaperViz, Google Research's figure method (Planner → Stylist → Visualizer → Critic), drawn with your own built-in image generation. Reads the Figure brief in 5_proposal/proposal.md and saves the figure in 5_proposal/figure/. Use after literature-review has written the proposal, when the student asks for the figure. No API key needed.
 ---
 
-# Figure from the Figure brief (step 5)
+# Figure with PaperViz (step 5)
 
-**Input:** the **Figure brief** (and the method section) in `5_proposal/proposal.md`. **Output:** image files in `5_proposal/figure/` only,
-plus one line in the proposal pointing to the chosen figure.
+PaperViz is Google Research's method for academic figures (github.com/google-research/papervizagent). You run its four agents
+yourself, using the prompts in [prompts.md](prompts.md) and the style rules in [style_guide.md](style_guide.md), and you draw the
+image with **your own built-in image generation tool**. No API key, no extra install.
 
-## 1. Read and plan
-Read the Figure brief. Tell the student, in 3–4 lines, what the figure will show: every box/element, every arrow, the labels, and the
-one message a reader should get. Ask them to confirm or correct it before you spend credits.
+**Inputs:** in `5_proposal/proposal.md`, the method / idea section (= PaperViz's *Methodology Section*) and the **Figure brief**
+(= PaperViz's *Figure Caption*). **Outputs:** only in `5_proposal/figure/`: the image, plus `<name>_description.md` with the final
+description. Never overwrite an existing file: add `_v2`, `_v3`.
 
-## 2. Pick the tool
-| The figure is… | Tool | Call |
-|---|---|---|
-| a method, system or pipeline (boxes and arrows, stages, data flow) | **PaperViz** (`paperviz` server) | `paperviz_generate_diagram(method_text, caption, filename, aspect_ratio, critic_rounds=1)` |
-| a scientific illustration or schematic (a device, a setup, a mechanism) | **SciDraw AI** (`scidraw` server) | `scidraw_generate_figure(prompt, filename, aspect_ratio, resolution="2K")` |
-| a plot of numbers (axes, curves, bars) | **MATLAB** (`matlab` server) | write a short script that draws it, `exportgraphics(gcf, '5_proposal/figure/<name>.png', 'Resolution', 200)` |
+## 0. Plan with the student
+Read both inputs. In 3–4 lines tell the student what the figure will show (elements, arrows, labels, the one message) and ask them
+to confirm or correct it. Pick a short file name, e.g. `figure_method`.
 
-- **PaperViz:** `method_text` = the method in full sentences (from the proposal); `caption` = what the figure must communicate (the
-  Figure brief). It takes 1–4 minutes; if it hands back a job id, call `paperviz_check_job` until it is done.
-- **SciDraw:** the `prompt` must name every element and label that has to appear, the layout (left to right, top to bottom) and a clean
-  journal style, white background, no title. A 2K image costs 5 credits; check `scidraw_credits` first and make **one** image at a time.
-- If a tool says its key is missing, tell the student which line of `AI_Tools/my_keys.env` to fill (and to *Reload Window*), or use
-  the next tool. Never ask the student to paste a key into the chat.
+## 1. Planner
+Follow the **Planner** prompt in `prompts.md`: from the methodology and the caption, write a *detailed* description of the figure:
+every element and connection, layout, background, colors, line thickness, icon style. No figure title inside the image.
 
-## 3. Check the result
-Open the saved image and compare it with the plan from step 1: is every element there, are the labels spelled correctly, is anything
-invented that the proposal does not say? Report the problems to the student. Regenerate at most twice, each time with a more precise
-prompt (or `critic_rounds=2`); every run costs credits or quota.
+## 2. Stylist
+Follow the **Stylist** prompt with `style_guide.md`: refine the look only (shapes, palette, typography, background).
+Do not change the content.
 
-## 4. Record it
-Add a line under the Figure brief in `5_proposal/proposal.md`: `Figure: figure/<file name> (made with <tool>)`. Then say:
+## 3. Visualizer
+Generate the image with your built-in image generation tool, using the **Visualizer** request in `prompts.md` with the stylist's
+description, landscape 16:9. Save it as `5_proposal/figure/<name>.png`.
+
+## 4. Critic (at most 2 rounds)
+Look at the image and follow the **Critic** prompt: is it faithful to the methodology and the caption, are the labels spelled
+right, is anything invented, is the caption text kept out of the image? If the critique is "No changes needed.", stop. Otherwise
+generate again from the revised description (step 3) and save as `_v2` (then `_v3`).
+
+## 5. Finish
+Save the final description as `5_proposal/figure/<name>_description.md`. Show the student the image and your critique notes.
+Add under the Figure brief in `5_proposal/proposal.md`: `Figure: figure/<file name> (PaperViz)`. Then say:
 "Next: run the research-report skill."
 
+If you have no image generation tool, say so plainly and stop; don't fake an image.
 Generated figures can contain wrong labels or invented details: the student must check them before using them anywhere.

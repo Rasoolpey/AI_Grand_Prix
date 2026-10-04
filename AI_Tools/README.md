@@ -17,7 +17,7 @@ Type each line in the agent panel, one at a time. Every result lands in a fixed 
 | 2 | `Run the literature-search skill` | `2_search/papers.csv` (30–40 papers with links) |
 | 3 | *(you)* Download the PDFs you can through the library | put them in `3_papers/pdf/` |
 | 4 | `Run the literature-review skill` | `4_review/evidence.csv`, `4_review/review.md`, then `5_proposal/proposal.md` |
-| 5 | `Run the research-figure skill` (draws the proposal's **Figure brief** with PaperViz, SciDraw or MATLAB) | `5_proposal/figure/` |
+| 5 | `Run the research-figure skill` (PaperViz, Google's figure method, draws the proposal's **Figure brief**) | `5_proposal/figure/` |
 | 6 | `Run the research-report skill` | `6_report/report.md` |
 
 The MATLAB experiment in your proposal stays **pending**: you build it after the workshop.
