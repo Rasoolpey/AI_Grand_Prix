@@ -39,28 +39,32 @@ The process-only execution-policy setting leaves the system policy unchanged. Th
 protocol client, preserves other configured MCP servers, and writes only inside this workshop. It does not install the
 Scholar, Scopus or MarkItDown servers. Results, logs and figure checks are in the git-ignored `.tools/log/` folder.
 
-## Figure tools (Part 1, research-figure skill)
+## Figure tool (Part 1, research-figure skill): PaperViz
 
-Neither tool ships an MCP server, so `setup.ps1` writes one for each into `.tools\mcp\<name>\server.py` (the Python is
-embedded in `setup.ps1`, like the Scholar wrapper) and registers them in `AI_Tools\.agents\mcp_config.json`. Both save into
-`AI_Tools\5_proposal\figure\`, never overwrite a file, and re-read `my_keys.env` on every call (no restart after pasting a key).
+PaperViz ships no MCP server, so `setup.ps1` writes one into `.tools\mcp\paperviz\server.py` (the Python is embedded in
+`setup.ps1`, like the Scholar wrapper) and registers it in `AI_Tools\.agents\mcp_config.json`. It saves into
+`AI_Tools\5_proposal\figure\`, never overwrites a file, and re-reads `my_keys.env` on every call (no restart after pasting a key).
+When PaperViz is not available (no key, no quota) the skill draws the figure with MATLAB.
 
-| | SciDraw AI (`scidraw`) | PaperViz (`paperviz`) |
-|---|---|---|
-| What | Official REST API, `https://sci-draw.com/api/v1` (`images/generations`, `jobs`, `credits`) | Google Research's PaperVizAgent @e088a8f: Planner → Visualizer → Critic, run in-process |
-| Key | `SCIDRAW_API_KEY` (sci-draw.com → Settings → API Keys, `sd_…`) | `GOOGLE_API_KEY` (aistudio.google.com/apikey) |
-| Cost | Free plan: 10 credits at sign-up + 5/day; 2K image = 5, 4K = 20 | Gemini API quota; the image model may need billing on the AI Studio project |
-| Tools | `scidraw_generate_figure`, `scidraw_check_job`, `scidraw_credits` | `paperviz_generate_diagram`, `paperviz_check_job`, `paperviz_check_setup` |
+| | PaperViz (`paperviz`) |
+|---|---|
+| What | Google Research's PaperVizAgent @e088a8f: Planner → Visualizer → Critic, run in-process |
+| Key | `GOOGLE_API_KEY` (aistudio.google.com/apikey) |
+| Cost | Gemini API quota; the image model may need billing on the AI Studio project |
+| Tools | `paperviz_generate_diagram`, `paperviz_check_job`, `paperviz_check_setup` |
 
-PaperViz adaptations in the wrapper (Google's code untouched): prints to stderr (stdout is the MCP channel), `time.tzset` no-op on
+Adaptations in the wrapper (Google's code untouched): prints to stderr (stdout is the MCP channel), `time.tzset` no-op on
 Windows, Gemini client forced onto the API key (upstream tries Google Cloud credentials first), empty `ref.json` so it runs without
 the PaperBananaBench dataset, Anthropic/OpenAI SDKs stubbed (Gemini only; the Anthropic SDK also has file paths over Windows'
 260-character limit), and a key/model check before each run (a wrong key fails in seconds instead of after minutes of retries).
 Models: `gemini-3-pro-preview` + `gemini-3-pro-image-preview`, changeable with `PAPERVIZ_MODEL` / `PAPERVIZ_IMAGE_MODEL`.
 
-**Tested 2026-10-04 without real keys:** both servers install with the pinned versions, start over MCP, list 3 tools each, reach
-the real APIs and turn a missing/invalid key into a clear instruction. **Not yet tested:** an actual figure from either tool
-(needs a SciDraw key and a Gemini key with image-model access).
+SciDraw AI was built and then dropped (2026-10-04): it needed a second key with scopes and credits. Re-running `setup.ps1` removes an
+old `scidraw` server and its config entry.
+
+**Tested 2026-10-04 without a real key:** installs with the pinned versions, starts over MCP, lists 3 tools, reaches the Gemini API
+and turns a missing/invalid key into a clear instruction. **Not yet tested:** an actual figure (needs a Gemini key with
+image-model access).
 
 ## Distribution
 - **One repo**, `github.com/Rasoolpey/AI_Grand_Prix` (public), mirrors this folder: `README.md`, `setup.ps1`, `remove-keys.ps1`,
@@ -73,13 +77,13 @@ the real APIs and turn a missing/invalid key into a clear instruction. **Not yet
 ```
 AI_Workshop\
   README.md · remove-keys.ps1
-  AI_Tools\        my_keys.env (Scopus key) · my_instructions.md (student overrides) · AGENTS.md (defaults)
+  AI_Tools\        my_keys.env (Scopus + Google AI Studio keys) · my_instructions.md (student overrides) · AGENTS.md (defaults)
                    1_topic\ … 6_report\ (fixed result folders, pre-filled templates)
-                   .agents\mcp_config.json (matlab, google-scholar, scopus, markitdown, scidraw, paperviz)
+                   .agents\mcp_config.json (matlab, google-scholar, scopus, markitdown, paperviz)
                    .agents\skills\ (research-question, grill-me, grilling, literature-search, literature-review, research-figure, research-report)
   AI_Grand_Prix\   .agents\mcp_config.json (matlab) · .agents\skills\ (race-debrief, car-design-review)
   .tools\ (hidden) uv 0.12.22 · Python 3.12 · MCP servers (matlab v0.14.0, Scholar @738d60a, Scopus @4968cc6, markitdown 0.0.1a7,
-                   scidraw + paperviz: small servers written by setup.ps1; PaperVizAgent @e088a8f) · log\
+                   paperviz: a small server written by setup.ps1 around PaperVizAgent @e088a8f) · log\
 ```
 Nothing global: no `~/.gemini` config, no user environment variables, no PATH change. Uninstall = delete `AI_Workshop` + the two desktop shortcuts.
 **Keys** live in `AI_Tools\my_keys.env`, inside the Part 1 workspace so students see it in VS Code's file list. The Scopus server

@@ -32,9 +32,8 @@ no Simulink or additional toolboxes are required. MATLAB Copilot is optional. Th
    (To install somewhere else, run `$env:AIW_DIR = "D:\AI_Workshop"` first in the same window. Keep the path short:
    Windows limits path length.)
 5. Paste your Scopus key when asked (it stays hidden; that's normal). Press **Enter** to skip the institution token.
-   Then the two **figure tools** ask for keys; both are optional (press Enter to skip):
-   a **SciDraw** key (free: https://sci-draw.com → *Settings → API Keys*) and a **Google AI Studio** key for PaperViz
-   (https://aistudio.google.com/apikey). No key yet? Press Enter; you can paste any key later into `AI_Tools\my_keys.env`.
+   Then the **figure tool** (PaperViz) asks for a **Google AI Studio** key (https://aistudio.google.com/apikey); it is optional
+   (press Enter to skip). No key yet? Press Enter; you can paste any key later into `AI_Tools\my_keys.env`.
 6. Wait for **ALL SET!** The last check starts MATLAB and drives a test race, which takes 1–3 minutes.
 
 You now have, in `C:\Users\<your name>\`:
@@ -54,7 +53,7 @@ Nothing else is installed (the tools sit in a hidden `.tools` folder), apart fro
 **Open the folder:** in VS Code, *File → Open Folder* → `AI_Workshop\AI_Tools` (or the desktop shortcut **AI Workshop – Part 1 AI Tools**).
 
 **Check:** in the Antigravity panel, the list of **MCP servers** shows `matlab`, `google-scholar`, `scopus`, `markitdown`,
-`scidraw`, `paperviz`.
+`paperviz`.
 
 **Your topic:** bring your own, or join the **topic pool** and draw one in class. Write it in `1_topic\my_topic.md`.
 
@@ -66,7 +65,7 @@ Then type these in the agent panel, one at a time. Each result lands in a fixed,
 | 2 | `Run the literature-search skill` | `2_search\papers.csv` (30–40 papers with links) |
 | 3 | *(you)* Download the PDFs you can, through the library | put them in `3_papers\pdf\` |
 | 4 | `Run the literature-review skill` | `4_review\` then `5_proposal\proposal.md` |
-| 5 | `Run the research-figure skill` (PaperViz, SciDraw AI or MATLAB draws the **Figure brief**) | `5_proposal\figure\` |
+| 5 | `Run the research-figure skill` (PaperViz or MATLAB draws the **Figure brief**) | `5_proposal\figure\` |
 | 6 | `Run the research-report skill` | `6_report\report.md` |
 
 Want the agent to work differently (shorter review, only recent papers, another language)? Write it in **`my_instructions.md`**:
@@ -101,8 +100,7 @@ They live in **`AI_Tools\my_keys.env`**. You see it in the VS Code file list as 
 ```
 SCOPUS_API_KEY=your-key
 SCOPUS_INST_TOKEN=
-SCIDRAW_API_KEY=sd_...        (figures: SciDraw AI; a 2K image costs 5 of your free daily credits)
-GOOGLE_API_KEY=...            (figures: PaperViz, runs on Google Gemini)
+GOOGLE_API_KEY=...            (figure: PaperViz, runs on Google Gemini)
 ```
 To add or change it: paste it after the `=`, save (Ctrl+S), then reload VS Code (`Ctrl+Shift+P` → *Reload Window*). The institution token is only needed **off campus**
 without the VPN (ask the library).
@@ -146,9 +144,10 @@ No admin rights, Docker, Git or Python are needed. The installer adds the Google
 2. **Read the installer's summary.** Expect `ALL SET!`, a line `MATLAB via MCP works - baseline race ...`, a line
    `Google Antigravity extension installed` (or `already installed`), and no yellow `[!!]` lines.
 3. **Part 1 in VS Code:** open `AI_Workshop\AI_Tools`, open the Antigravity panel and sign in; its MCP servers list shows
-   `matlab`, `google-scholar`, `scopus`, `markitdown`, `scidraw`, `paperviz`; the agent finds the skills (ask it: `Which skills do you have?`).
-   **Figure tools** (with keys in `my_keys.env`): ask the agent `Run scidraw_credits and paperviz_check_setup`, then
-   `Use scidraw_generate_figure to draw a labelled block diagram of a PID speed controller` and check the file in `5_proposal\figure\`.
+   `matlab`, `google-scholar`, `scopus`, `markitdown`, `paperviz`; the agent finds the skills (ask it: `Which skills do you have?`).
+   **Figure tool** (with `GOOGLE_API_KEY` in `my_keys.env`): ask the agent `Run paperviz_check_setup`, then
+   `Use paperviz_generate_diagram to draw a block diagram of a PID speed controller driving a DC motor` and check the file in
+   `5_proposal\figure\`.
    **Still unverified:** that the VS Code extension reads the workspace `.agents\skills\` folder like the app does.
 4. **Part 2 in VS Code:** open `AI_Workshop\AI_Grand_Prix`; the MCP servers list shows `matlab`; the agent lists
    `race-debrief` and `car-design-review`. Then ask the agent:

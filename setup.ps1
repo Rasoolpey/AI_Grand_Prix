@@ -24,7 +24,7 @@
    2. Workshop files                      7. Per-workspace Antigravity config + skills
    3. uv + private Python                 8. Self-test over MCP (incl. a baseline race)
    4. MATLAB MCP Server (MathWorks)       9. VS Code extension + desktop shortcuts
-   5. Google Scholar, Scopus, MarkItDown, SciDraw, PaperViz
+   5. Google Scholar, Scopus, MarkItDown, PaperViz
 
  Safe to run again — it never overwrites your own work.
 
@@ -36,7 +36,7 @@
    AIW_REPO_BRANCH      GitHub branch to download   (default main)
    AIW_NO_SHORTCUTS=1   don't create desktop shortcuts
    AIW_NO_EXTENSION=1   don't install the Google Antigravity extension in VS Code
-   SCOPUS_API_KEY / SCOPUS_INST_TOKEN / SCIDRAW_API_KEY / GOOGLE_API_KEY
+   SCOPUS_API_KEY / SCOPUS_INST_TOKEN / GOOGLE_API_KEY
                         written to AI_Tools\my_keys.env instead of asking (otherwise a key
                         already in that file is re-used, or you are asked)
 =============================================================================
@@ -208,10 +208,6 @@ function Install-AIWorkshop {
 SCOPUS_API_KEY=$(V 'SCOPUS_API_KEY')
 # Optional: only needed OFF campus without the VPN (ask the library for an institution token).
 SCOPUS_INST_TOKEN=$(V 'SCOPUS_INST_TOKEN')
-
-# SciDraw AI (figures): https://sci-draw.com -> Settings -> API Keys (starts with sd_).
-# Free plan: 10 credits at sign-up + 5 a day; one 2K image costs 5.
-SCIDRAW_API_KEY=$(V 'SCIDRAW_API_KEY')
 
 # PaperViz (method diagrams, runs on Google Gemini): https://aistudio.google.com/apikey
 GOOGLE_API_KEY=$(V 'GOOGLE_API_KEY')
@@ -416,7 +412,7 @@ PAPERVIZ_IMAGE_MODEL=$(V 'PAPERVIZ_IMAGE_MODEL')
     }
 
     # ================================================================ 5. Research MCP servers
-    Step 5 'Research MCP servers (Google Scholar, Scopus, MarkItDown, SciDraw, PaperViz)'
+    Step 5 'Research MCP servers (Google Scholar, Scopus, MarkItDown, PaperViz)'
 
     # Google Scholar — not on PyPI, so fetch the pinned source and run it through a small wrapper.
     $scholarDir = Join-Path $McpDir 'google-scholar'
@@ -464,197 +460,10 @@ getattr(importlib.import_module(mod), func)()
     $scopusVenv = Install-PyServer 'scopus' @("https://github.com/JOSETRA44/scopus-mcp/archive/$($Pins.ScopusSha).zip", 'mcp<2')
     $mdVenv     = Install-PyServer 'markitdown' @("markitdown-mcp==$($Pins.MarkItDown)")
 
-    # Figures: SciDraw AI (its official REST API) and PaperViz (Google Research's PaperVizAgent).
-    # Neither ships an MCP server, so this installer writes a small one for each (the Python below).
-    $sciDir  = Join-Path $McpDir 'scidraw'
-    $sciVenv = Install-PyServer 'scidraw' @('mcp==1.30.0', 'httpx==0.28.1')
-    $sciRun  = Join-Path $sciDir 'server.py'
-    @'
-"""SciDraw AI MCP server for the AI Workshop.
-
-Generates scientific illustrations through SciDraw AI's official REST API
-(https://sci-draw.com/docs/api) and saves them into the student's figure folder.
-
-    python scidraw_mcp.py --keys <AI_Tools\\my_keys.env> --out <AI_Tools\\5_proposal\\figure>
-
-Key: SCIDRAW_API_KEY in my_keys.env (sci-draw.com -> Settings -> API Keys, starts with sd_).
-The file is re-read on every call, so a newly pasted key works without restarting.
-Credits: a 2K image costs 5 credits, 4K costs 20; the free plan gives 10 on sign-up and 5 a day.
-
-Nothing is printed to stdout: that stream carries the MCP protocol.
-"""
-
-import argparse
-import re
-import time
-import uuid
-from pathlib import Path
-
-import httpx
-from mcp.server.fastmcp import FastMCP
-
-BASE = "https://sci-draw.com"
-ASPECTS = ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "5:4", "4:5", "21:9"]
-CREDITS = {"2K": 5, "4K": 20}
-HINTS = {
-    "UNAUTHORIZED": "The SciDraw key is missing or wrong. Create one at https://sci-draw.com -> Settings -> API Keys "
-                    "(it starts with sd_) and paste it after SCIDRAW_API_KEY= in AI_Tools/my_keys.env.",
-    "FORBIDDEN": "The key is not allowed to do this: create a key with the images:generate, jobs:read and credits:read scopes.",
-    "INSUFFICIENT_CREDITS": "Not enough SciDraw credits. A 2K image costs 5; the free plan adds 5 credits every day.",
-    "RATE_LIMIT_EXCEEDED": "Too many requests: wait a minute and try again.",
-    "CONTENT_POLICY_VIOLATION": "SciDraw refused this prompt. Rephrase it as a neutral scientific illustration.",
-}
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--keys", required=True)
-parser.add_argument("--out", required=True)
-ARGS, _ = parser.parse_known_args()
-OUT = Path(ARGS.out)
-
-mcp = FastMCP("scidraw")
-
-
-class SciDrawError(Exception):
-    pass
-
-
-def _api_key() -> str:
-    path = Path(ARGS.keys)
-    if path.exists():
-        for line in path.read_text(encoding="utf-8").splitlines():
-            m = re.match(r"^\s*SCIDRAW_API_KEY\s*=\s*(.*?)\s*$", line)
-            if m and m.group(1).strip("\"'"):
-                return m.group(1).strip("\"'")
-    raise SciDrawError(HINTS["UNAUTHORIZED"])
-
-
-def _client() -> httpx.Client:
-    return httpx.Client(base_url=BASE, timeout=httpx.Timeout(60.0, read=45.0),
-                        headers={"Authorization": f"Bearer {_api_key()}", "Accept": "application/json"})
-
-
-def _data(resp: httpx.Response) -> dict:
-    try:
-        body = resp.json()
-    except ValueError:
-        raise SciDrawError(f"SciDraw answered HTTP {resp.status_code} without JSON.")
-    if not body.get("success"):
-        err = body.get("error") or {}
-        code = err.get("code", f"HTTP_{resp.status_code}")
-        raise SciDrawError(f"{code}: {err.get('message', '')} {HINTS.get(code, '')}".strip())
-    return body["data"]
-
-
-def _safe_name(name: str) -> str:
-    name = re.sub(r"[^A-Za-z0-9_-]+", "_", Path(name).stem).strip("_")
-    return name or "figure_scidraw"
-
-
-def _save_files(client: httpx.Client, job: dict, filename: str) -> list[str]:
-    OUT.mkdir(parents=True, exist_ok=True)
-    saved = []
-    for i, f in enumerate((job.get("result") or {}).get("files", []), start=1):
-        stem = _safe_name(filename) + (f"_{i}" if i > 1 else "")
-        target = OUT / f"{stem}.{f.get('format', 'png')}"
-        n = 2
-        while target.exists():                       # never overwrite a student's earlier figure
-            target = OUT / f"{stem}_v{n}.{f.get('format', 'png')}"
-            n += 1
-        r = client.get(f["url"], headers={"Authorization": ""}, follow_redirects=True)
-        if r.status_code != 200:                     # some file URLs need the key, others are public
-            r = client.get(f["url"], follow_redirects=True)
-        r.raise_for_status()
-        target.write_bytes(r.content)
-        saved.append(str(target))
-    return saved
-
-
-def _wait(client: httpx.Client, job: dict, wait_seconds: int) -> dict:
-    deadline = time.monotonic() + max(0, wait_seconds)
-    while job["status"] in ("queued", "processing") and time.monotonic() < deadline:
-        time.sleep(3)
-        job = _data(client.get(f"/api/v1/jobs/{job['id']}"))
-    return job
-
-
-def _report(client: httpx.Client, job: dict, filename: str) -> str:
-    status = job["status"]
-    if status == "succeeded":
-        paths = _save_files(client, job, filename)
-        try:
-            balance = _data(client.get("/api/v1/credits"))["balance"]
-            left = f" Credits left: {balance}."
-        except SciDrawError:
-            left = ""
-        return (f"Saved {len(paths)} figure(s):\n" + "\n".join(paths) +
-                f"\nCredits used: {job.get('credits_consumed', '?')}.{left}")
-    if status in ("queued", "processing"):
-        return (f"Still {status} (job {job['id']}). Call scidraw_check_job with job_id='{job['id']}' "
-                f"and filename='{filename}' in a little while.")
-    err = job.get("error") or {}
-    code = err.get("code", status.upper())
-    return f"The job {status}: {code} {err.get('message', '')} {HINTS.get(code, '')}".strip()
-
-
-@mcp.tool()
-def scidraw_credits() -> str:
-    """Show the SciDraw credit balance (a 2K image costs 5 credits, 4K costs 20)."""
-    try:
-        with _client() as c:
-            return f"SciDraw credits: {_data(c.get('/api/v1/credits'))['balance']}"
-    except (SciDrawError, httpx.HTTPError) as e:
-        return f"Could not read the balance: {e}"
-
-
-@mcp.tool()
-def scidraw_generate_figure(prompt: str, filename: str = "figure_scidraw", aspect_ratio: str = "16:9",
-                            resolution: str = "2K", count: int = 1, wait_seconds: int = 150) -> str:
-    """Draw a scientific illustration with SciDraw AI and save it in 5_proposal/figure/.
-
-    prompt: what the figure shows - layout, labelled parts, arrows, style (max 5000 characters).
-            Write it from the proposal's Figure brief; name every element that must appear.
-    filename: file name without extension (an existing file is never overwritten).
-    aspect_ratio: one of 1:1, 16:9, 9:16, 4:3, 3:4, 3:2, 2:3, 5:4, 4:5, 21:9.
-    resolution: "2K" (5 credits per image) or "4K" (20 credits per image).
-    count: images to generate, 1-4 (each one costs credits).
-    wait_seconds: how long to wait for the result before handing back a job id.
-    """
-    if not prompt.strip():
-        return "The prompt is empty."
-    if len(prompt) > 5000:
-        return f"The prompt has {len(prompt)} characters; SciDraw accepts at most 5000."
-    if aspect_ratio not in ASPECTS:
-        return f"aspect_ratio must be one of {', '.join(ASPECTS)}."
-    if resolution not in CREDITS:
-        return 'resolution must be "2K" or "4K".'
-    count = max(1, min(4, int(count)))
-    try:
-        with _client() as c:
-            resp = c.post("/api/v1/images/generations",
-                          headers={"Idempotency-Key": f"aiw-{uuid.uuid4().hex}", "Prefer": "wait=30",
-                                   "Content-Type": "application/json"},
-                          json={"prompt": prompt, "aspect_ratio": aspect_ratio,
-                                "resolution": resolution, "count": count})
-            job = _wait(c, _data(resp), wait_seconds - 30)
-            return _report(c, job, filename)
-    except (SciDrawError, httpx.HTTPError) as e:
-        return f"SciDraw: {e}"
-
-
-@mcp.tool()
-def scidraw_check_job(job_id: str, filename: str = "figure_scidraw", wait_seconds: int = 60) -> str:
-    """Check a SciDraw job started earlier; saves the figure into 5_proposal/figure/ when it is ready."""
-    try:
-        with _client() as c:
-            job = _wait(c, _data(c.get(f"/api/v1/jobs/{job_id}")), wait_seconds)
-            return _report(c, job, filename)
-    except (SciDrawError, httpx.HTTPError) as e:
-        return f"SciDraw: {e}"
-
-
-if __name__ == "__main__":
-    mcp.run()
-'@ | Set-Content -Path $sciRun -Encoding ASCII
+    # Figures: PaperViz (Google Research's PaperVizAgent). It ships no MCP server, so this installer
+    # writes a small one (the Python below). An old SciDraw server from an earlier install is removed.
+    $oldSci = Join-Path $McpDir 'scidraw'
+    if (Test-Path $oldSci) { Remove-Item $oldSci -Recurse -Force -ErrorAction SilentlyContinue }
 
     $pvDir = Join-Path $McpDir 'paperviz'
     $pvSrc = Join-Path $pvDir 'src'
@@ -944,26 +753,10 @@ if __name__ == "__main__":
     } else {
         Warn "No Scopus key yet - put it in $KeysFile (Scopus tools won't work until then)."
     }
-    # Figure tools: optional keys (Enter to skip; paste them into my_keys.env later).
+    # Figure tool (PaperViz): optional key (Enter to skip; paste it into my_keys.env later).
     $figKeys = @{}
-    foreach ($kn in 'SCIDRAW_API_KEY', 'GOOGLE_API_KEY', 'PAPERVIZ_MODEL', 'PAPERVIZ_IMAGE_MODEL') {
+    foreach ($kn in 'GOOGLE_API_KEY', 'PAPERVIZ_MODEL', 'PAPERVIZ_IMAGE_MODEL') {
         $figKeys[$kn] = $(if ([Environment]::GetEnvironmentVariable($kn)) { [Environment]::GetEnvironmentVariable($kn) } else { $saved[$kn] })
-    }
-    if (-not $figKeys.SCIDRAW_API_KEY) {
-        Info 'SciDraw AI draws figures: free key at https://sci-draw.com -> Settings -> API Keys (Enter to skip)'
-        $figKeys.SCIDRAW_API_KEY = Read-Secret 'SciDraw API key (sd_...)'
-    }
-    if ($figKeys.SCIDRAW_API_KEY) {
-        try {
-            $r = Invoke-RestMethod 'https://sci-draw.com/api/v1/credits' -Headers @{ Authorization = "Bearer $($figKeys.SCIDRAW_API_KEY)" } -UseBasicParsing
-            Ok "SciDraw key works ($($r.data.balance) credits)"
-        } catch {
-            $code = $_.Exception.Response.StatusCode.value__
-            if ($code -eq 401 -or $code -eq 403) { Warn "SciDraw rejected the key (HTTP $code). Check SCIDRAW_API_KEY in AI_Tools\my_keys.env." }
-            else { Warn "Could not reach SciDraw to check the key ($($_.Exception.Message)). Saved it anyway." }
-        }
-    } else {
-        Info 'No SciDraw key yet - the scidraw tool will ask for one when it is used.'
     }
     if (-not $figKeys.GOOGLE_API_KEY) {
         Info 'PaperViz draws method diagrams with Google Gemini: key at https://aistudio.google.com/apikey (Enter to skip)'
@@ -1007,10 +800,6 @@ if __name__ == "__main__":
             command = "$mdVenv\Scripts\markitdown-mcp.exe"
             args    = @()
         }
-        'scidraw' = [ordered]@{
-            command = "$sciVenv\Scripts\python.exe"
-            args    = @($sciRun, '--keys', $KeysFile, '--out', (Join-Path $ResearchDir '5_proposal\figure'))
-        }
         'paperviz' = [ordered]@{
             command = "$pvVenv\Scripts\python.exe"
             args    = @($pvRun, '--keys', $KeysFile, '--out', (Join-Path $ResearchDir '5_proposal\figure'), '--src', $pvSrc)
@@ -1018,7 +807,13 @@ if __name__ == "__main__":
     }
 
     Merge-McpConfig $researchCfg $servers
-    Ok 'AI_Tools\.agents\mcp_config.json: matlab, google-scholar, scopus, markitdown, scidraw, paperviz'
+    try {                                             # drop the SciDraw entry an earlier install may have written
+        $c = Get-Content $researchCfg -Raw | ConvertFrom-Json
+        if ($c.mcpServers.PSObject.Properties.Name -contains 'scidraw') {
+            $c.mcpServers.PSObject.Properties.Remove('scidraw'); Write-JsonFile $researchCfg $c
+        }
+    } catch { }
+    Ok 'AI_Tools\.agents\mcp_config.json: matlab, google-scholar, scopus, markitdown, paperviz'
     Merge-McpConfig $raceCfg ([ordered]@{ 'matlab' = (New-MatlabServer $RaceDir) })
     Ok 'AI_Grand_Prix\.agents\mcp_config.json: matlab'
 
@@ -1045,7 +840,7 @@ if __name__ == "__main__":
     if ($SkipSelfTest) {
         Info 'Skipped (AIW_SKIP_TEST=1).'
     } else {
-        foreach ($name in 'google-scholar', 'scopus', 'markitdown', 'scidraw', 'paperviz') {
+        foreach ($name in 'google-scholar', 'scopus', 'markitdown', 'paperviz') {
             $s = $null
             try {
                 $s = Start-McpSession $servers[$name]
@@ -1176,7 +971,7 @@ if __name__ == "__main__":
   NEXT STEPS
   ----------
   1. In VS Code, open the folder for each part (File > Open Folder, or use the desktop shortcuts):
-       Part 1:  $ResearchDir        (tools: matlab, google-scholar, scopus, markitdown, scidraw, paperviz)
+       Part 1:  $ResearchDir        (tools: matlab, google-scholar, scopus, markitdown, paperviz)
        Part 2:  $RaceDir   (tools: matlab)
   2. Open the Antigravity panel, sign in with your Google account, and check
      its MCP servers list to see the tools.
