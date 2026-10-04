@@ -23,3 +23,6 @@ instructor/race/finals/
 instructor/race/submissions/*
 !instructor/race/submissions/README.md
 instructor/race/results/
+
+# Shared workshop keys (instructor hands this file out on the day): NEVER commit it - the repo is public
+workshop_keys*
