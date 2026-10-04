@@ -1,6 +1,6 @@
 <#
 =============================================================================
- setup.ps1 — AI Workshop one-command setup for Windows (Antigravity edition)
+ setup.ps1 — AI Workshop one-command setup for Windows (VS Code + Google Antigravity extension)
 =============================================================================
 
  Paste this into PowerShell (no admin rights needed):
@@ -9,7 +9,10 @@
 
  SELF-CONTAINED: everything lives in ONE folder, %USERPROFILE%\AI_Workshop.
  Nothing is written to your global Antigravity settings, PATH or environment
- variables. To uninstall, delete the folder (and the two desktop shortcuts).
+ variables. The only thing outside the folder is the Google Antigravity
+ extension, added to YOUR VS Code (per user, no admin).
+ To uninstall, delete the folder and the two desktop shortcuts (and remove the
+ extension in VS Code if you like).
 
      AI_Workshop\
        AI_Tools\        Part 1 workspace: AI tools + research   (my_keys.env = YOUR Scopus key)
@@ -20,7 +23,7 @@
    1. Find MATLAB                         6. Your Scopus key -> AI_Tools\my_keys.env
    2. Workshop files                      7. Per-workspace Antigravity config + skills
    3. uv + private Python                 8. Self-test over MCP (incl. a baseline race)
-   4. MATLAB MCP Server (MathWorks)       9. Desktop shortcuts
+   4. MATLAB MCP Server (MathWorks)       9. VS Code extension + desktop shortcuts
    5. Google Scholar, Scopus, MarkItDown
 
  Safe to run again — it never overwrites your own work.
@@ -32,6 +35,7 @@
    AIW_LOCAL_WORKSHOP   copy AI_Tools + AI_Grand_Prix from this local folder instead of GitHub (testing)
    AIW_REPO_BRANCH      GitHub branch to download   (default main)
    AIW_NO_SHORTCUTS=1   don't create desktop shortcuts
+   AIW_NO_EXTENSION=1   don't install the Google Antigravity extension in VS Code
    SCOPUS_API_KEY / SCOPUS_INST_TOKEN
                         written to AI_Tools\my_keys.env instead of asking (otherwise a key
                         already in that file is re-used, or you are asked)
@@ -194,7 +198,7 @@ function Install-AIWorkshop {
 
     function Write-KeysFile([string]$Path, [string]$ScopusKey, [string]$InstToken) {
         $text = @"
-# KEY: paste your Scopus API key after the = sign, then save (Ctrl+S) and restart Antigravity.
+# KEY: paste your Scopus API key after the = sign, then save (Ctrl+S) and reload VS Code (Ctrl+Shift+P > Reload Window).
 # Get a key at https://dev.elsevier.com  ->  "I want an API key"  (register with your university e-mail)
 # This file stays on your computer. Never share it.
 
@@ -576,31 +580,69 @@ getattr(importlib.import_module(mod), func)()
         } finally { if ($s) { Stop-McpSession $s } }
     }
 
-    # ================================================================ 9. Shortcuts + summary
-    Step 9 'Desktop shortcuts'
-    # Prefer the IDE (it opens a folder as a workspace); fall back to the standalone app.
+    # ================================================================ 9. VS Code extension + shortcuts
+    Step 9 'VS Code: Antigravity extension + desktop shortcuts'
+    # Students can't install apps on lab PCs, but VS Code is there and extensions install per user
+    # (no admin). The Google Antigravity extension reads the same .agents\ folder as the app.
+    $codeExe = @(
+        (Join-Path $env:LOCALAPPDATA 'Programs\Microsoft VS Code\Code.exe'),
+        (Join-Path $env:ProgramFiles 'Microsoft VS Code\Code.exe'),
+        $(if (${env:ProgramFiles(x86)}) { Join-Path ${env:ProgramFiles(x86)} 'Microsoft VS Code\Code.exe' })
+    ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+    # Fallback: the standalone Antigravity app, if a machine has it.
     $agExe = @(
         (Join-Path $env:LOCALAPPDATA 'Programs\Antigravity IDE\Antigravity IDE.exe'),
         (Join-Path $env:ProgramFiles 'Antigravity IDE\Antigravity IDE.exe'),
         (Join-Path $env:LOCALAPPDATA 'Programs\Antigravity\Antigravity.exe'),
         (Join-Path $env:ProgramFiles 'Antigravity\Antigravity.exe')
     ) | Where-Object { Test-Path $_ } | Select-Object -First 1
-    if ($env:AIW_NO_SHORTCUTS -eq '1') {
-        Info 'Skipped (AIW_NO_SHORTCUTS=1).'
+    $AgExtension = 'google.google-antigravity'
+    $editorExe = $(if ($codeExe) { $codeExe } else { $agExe })
+
+    if ($codeExe) {
+        Ok "VS Code: $codeExe"
+        $codeCli = Join-Path (Split-Path $codeExe -Parent) 'bin\code.cmd'
+        if ($env:AIW_NO_EXTENSION -eq '1') {
+            Info 'Extension install skipped (AIW_NO_EXTENSION=1).'
+        } elseif (Test-Path $codeCli) {
+            $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+            try {
+                $have = @(& $codeCli --list-extensions 2>$null) -contains $AgExtension
+                if ($have) {
+                    Ok 'Google Antigravity extension already installed'
+                } else {
+                    Info 'Installing the Google Antigravity extension (per user, no admin)...'
+                    & $codeCli --install-extension $AgExtension 2>&1 | ForEach-Object { Info "$_" }
+                    if (@(& $codeCli --list-extensions 2>$null) -contains $AgExtension) {
+                        Ok 'Google Antigravity extension installed'
+                    } else {
+                        Warn "Could not install the extension automatically. In VS Code: Extensions (Ctrl+Shift+X) -> search 'Google Antigravity' (publisher Google) -> Install."
+                    }
+                }
+            } finally { $ErrorActionPreference = $old }
+        } else {
+            Warn "Install the extension by hand. In VS Code: Extensions (Ctrl+Shift+X) -> search 'Google Antigravity' (publisher Google) -> Install."
+        }
     } elseif ($agExe) {
+        Ok "Antigravity app: $agExe"
+    } else {
+        Warn "VS Code was not found. Open VS Code, install the 'Google Antigravity' extension (publisher Google), then open the folders below."
+    }
+
+    if ($env:AIW_NO_SHORTCUTS -eq '1') {
+        Info 'Shortcuts skipped (AIW_NO_SHORTCUTS=1).'
+    } elseif ($editorExe) {
         try {
             $ws = New-Object -ComObject WScript.Shell
             foreach ($pair in @(@('AI Workshop - Part 1 AI Tools', $ResearchDir), @('AI Workshop - Part 2 Grand Prix', $RaceDir))) {
                 $sc = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) "$($pair[0]).lnk"))
-                $sc.TargetPath       = $agExe
+                $sc.TargetPath       = $editorExe
                 $sc.Arguments        = '"' + $pair[1] + '"'
                 $sc.WorkingDirectory = $pair[1]
                 $sc.Save()
             }
-            Ok 'Two shortcuts created on your desktop'
-        } catch { Info "Could not create shortcuts ($($_.Exception.Message)) - open the folders from Antigravity instead." }
-    } else {
-        Warn 'Antigravity is not installed yet. Get it from https://antigravity.google/download, then open the folders below.'
+            Ok 'Two shortcuts created on your desktop (each opens one part folder)'
+        } catch { Info "Could not create shortcuts ($($_.Exception.Message)) - open the folders from VS Code instead (File > Open Folder)." }
     }
 
     foreach ($k in $savedEnv.Keys) {
@@ -622,10 +664,11 @@ getattr(importlib.import_module(mod), func)()
 
   NEXT STEPS
   ----------
-  1. In Antigravity, open the folder for each part (or use the desktop shortcuts):
+  1. In VS Code, open the folder for each part (File > Open Folder, or use the desktop shortcuts):
        Part 1:  $ResearchDir        (tools: matlab, google-scholar, scopus, markitdown)
        Part 2:  $RaceDir   (tools: matlab)
-  2. In the agent panel check  ...  > MCP Servers  to see the tools.
+  2. Open the Antigravity panel, sign in with your Google account, and check
+     its MCP servers list to see the tools.
 
   Your keys:     $KeysFile
   Student guide: $WorkshopDir\README.md

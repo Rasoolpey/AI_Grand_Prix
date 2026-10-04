@@ -20,7 +20,7 @@ Students follow the workshop [README.md](../README.md). This page covers what `s
   because dependency analysis can miss dynamically selected functions or unavailable products.
 - The pinned **MATLAB MCP server v0.14.0** was tested separately against R2026b: five tools were offered and the
   technical baseline finished in 54.00 s through `evaluate_matlab_code`. The local per-project configs point explicitly
-  to R2026b. Loading those configs in Antigravity still needs an app check.
+  to R2026b. Loading those configs in the VS Code Antigravity extension still needs a check on a lab PC.
 
 To repeat the installation check from the repository root in MATLAB:
 
@@ -58,8 +58,8 @@ AI_Workshop\
   .tools\ (hidden) uv 0.12.22 · Python 3.12 · MCP servers (matlab v0.14.0, Scholar @738d60a, Scopus @4968cc6, markitdown 0.0.1a7) · log\
 ```
 Nothing global: no `~/.gemini` config, no user environment variables, no PATH change. Uninstall = delete `AI_Workshop` + the two desktop shortcuts.
-**Keys** live in `AI_Tools\my_keys.env`, inside the Part 1 workspace so students see it in Antigravity's file list. The Scopus server
-is started through `.tools\mcp\run_with_keys.py`, which loads that file at start-up, so a changed key takes effect after restarting Antigravity.
+**Keys** live in `AI_Tools\my_keys.env`, inside the Part 1 workspace so students see it in VS Code's file list. The Scopus server
+is started through `.tools\mcp\run_with_keys.py`, which loads that file at start-up, so a changed key takes effect after reloading the VS Code window.
 
 ## Options (set before running)
 | Variable | Effect |

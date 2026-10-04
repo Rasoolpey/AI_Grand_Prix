@@ -14,7 +14,10 @@ Two parts, one folder:
 **MATLAB must already be installed and activated** (R2024a or later recommended). The Grand Prix uses **base MATLAB only**:
 no Simulink or additional toolboxes are required. MATLAB Copilot is optional. The workshop installer sets up the agent's MATLAB connection.
 
-1. **Install Antigravity** from https://antigravity.google/download and sign in with your student account.
+1. **Open VS Code** (it is already on the lab PCs; you don't need to install any program) and add the
+   **Google Antigravity extension**: *Extensions* (`Ctrl+Shift+X`) → search `Google Antigravity` → the one by **Google** →
+   *Install*. Open the Antigravity panel and sign in with your student Google account.
+   (If you skip this, step 3 installs the extension for you; you still sign in yourself.)
 2. **Get a Scopus API key** at https://dev.elsevier.com → *I want an API key* (register with your university e-mail).
 3. **Open PowerShell** (Start menu → type `PowerShell`) and paste:
    ```powershell
@@ -32,15 +35,15 @@ AI_Workshop\
   AI_Tools\        Part 1   (your Scopus key: AI_Tools\my_keys.env)
   AI_Grand_Prix\   Part 2
 ```
-Nothing is installed anywhere else (the tools sit in a hidden `.tools` folder).
+Nothing else is installed (the tools sit in a hidden `.tools` folder), apart from the Antigravity extension in your VS Code.
 
 ---
 
 ## 2. Part 1 — AI tools for research
 
-**Open the folder:** in Antigravity, *File → Open Folder* → `AI_Workshop\AI_Tools` (or the desktop shortcut **AI Workshop – Part 1 AI Tools**).
+**Open the folder:** in VS Code, *File → Open Folder* → `AI_Workshop\AI_Tools` (or the desktop shortcut **AI Workshop – Part 1 AI Tools**).
 
-**Check:** agent panel → `...` → **MCP Servers** shows `matlab`, `google-scholar`, `scopus`, `markitdown`.
+**Check:** in the Antigravity panel, the list of **MCP servers** shows `matlab`, `google-scholar`, `scopus`, `markitdown`.
 
 **Your topic:** bring your own, or join the **topic pool** and draw one in class. Write it in `1_topic\my_topic.md`.
 
@@ -64,7 +67,7 @@ your rules override the defaults.
 
 ## 3. Part 2 — AI Grand Prix
 
-**Open the folder:** `AI_Workshop\AI_Grand_Prix` (or **AI Workshop – Part 2 Grand Prix**). MCP Servers shows `matlab`.
+**Open the folder:** in VS Code, `AI_Workshop\AI_Grand_Prix` (or **AI Workshop – Part 2 Grand Prix**). The Antigravity panel's MCP servers list shows `matlab`.
 
 You build an electric race car from parts (`student\carDesign.m`, budget 80 credits) and write its driver
 (`student\controller.m`). Start with:
@@ -83,12 +86,12 @@ equations in `AI_Grand_Prix\PHYSICS.md`, and how to work with your agent in `AGE
 
 ## 4. Your Scopus key
 
-It lives in **`AI_Tools\my_keys.env`**. You see it in the file list as soon as you open Part 1 in Antigravity:
+It lives in **`AI_Tools\my_keys.env`**. You see it in the VS Code file list as soon as you open Part 1:
 ```
 SCOPUS_API_KEY=your-key
 SCOPUS_INST_TOKEN=
 ```
-To add or change it: paste it after the `=`, save (Ctrl+S), restart Antigravity. The institution token is only needed **off campus**
+To add or change it: paste it after the `=`, save (Ctrl+S), then reload VS Code (`Ctrl+Shift+P` → *Reload Window*). The institution token is only needed **off campus**
 without the VPN (ask the library).
 
 ---
@@ -108,7 +111,8 @@ Or delete the `AI_Workshop` folder and the two desktop shortcuts.
 | Anything went wrong in setup | Run the setup command again. It's safe and keeps your work. |
 | `MATLAB has no licence` | Open MATLAB once normally, sign in, then run setup again. |
 | `Scopus rejected the key` | Check `AI_Tools\my_keys.env`. Off campus you need the VPN or an institution token. |
-| A tool is missing in Antigravity | Open the **part folder** (`AI_Tools` or `AI_Grand_Prix`), not `AI_Workshop` itself. |
+| A tool is missing in the Antigravity panel | Open the **part folder** (`AI_Tools` or `AI_Grand_Prix`) in VS Code, not `AI_Workshop` itself; then *Reload Window*. |
+| No Antigravity panel in VS Code | Install the extension: *Extensions* (`Ctrl+Shift+X`) → `Google Antigravity` (publisher Google) → *Install*. |
 | Still stuck | Raise your hand and show the yellow `[!!]` lines. |
 
 ---
@@ -117,17 +121,20 @@ Or delete the `AI_Workshop` folder and the two desktop shortcuts.
 
 Use a machine (or a fresh Windows account) that has never run the workshop, so nothing is left over from earlier tests.
 
-**Prerequisites:** Windows, MATLAB installed and signed in (R2024a or later; base MATLAB only), Antigravity installed.
-No admin rights, Docker, Git or Python are needed.
+**Prerequisites:** Windows, MATLAB installed and signed in (R2024a or later; base MATLAB only), VS Code (as on the lab PCs).
+No admin rights, Docker, Git or Python are needed. The installer adds the Google Antigravity extension to VS Code
+(skip that with `$env:AIW_NO_EXTENSION = "1"` to test the manual step).
 
 1. **Install exactly as a student would** (section 1): paste the one-line command into PowerShell.
    - To try a branch instead of `main`, first run `$env:AIW_REPO_BRANCH = "<branch>"`.
    - To try a local copy of this repo instead of GitHub, first run `$env:AIW_LOCAL_WORKSHOP = "C:\path\to\AI-Workshop"`.
    - More than one MATLAB? Choose one with `$env:AIW_MATLAB_ROOT = "C:\Program Files\MATLAB\R2026b"`.
-2. **Read the installer's summary.** Expect `ALL SET!`, a line `MATLAB via MCP works - baseline race ...`, and no yellow `[!!]` lines.
-3. **Part 1 in Antigravity:** open `AI_Workshop\AI_Tools`; *MCP Servers* lists `matlab`, `google-scholar`, `scopus`,
-   `markitdown`; the agent finds the skills (ask it: `Which skills do you have?`).
-4. **Part 2 in Antigravity:** open `AI_Workshop\AI_Grand_Prix`; *MCP Servers* lists `matlab`; the agent lists
+2. **Read the installer's summary.** Expect `ALL SET!`, a line `MATLAB via MCP works - baseline race ...`, a line
+   `Google Antigravity extension installed` (or `already installed`), and no yellow `[!!]` lines.
+3. **Part 1 in VS Code:** open `AI_Workshop\AI_Tools`, open the Antigravity panel and sign in; its MCP servers list shows
+   `matlab`, `google-scholar`, `scopus`, `markitdown`; the agent finds the skills (ask it: `Which skills do you have?`).
+   **Still unverified:** that the VS Code extension reads the workspace `.agents\skills\` folder like the app does.
+4. **Part 2 in VS Code:** open `AI_Workshop\AI_Grand_Prix`; the MCP servers list shows `matlab`; the agent lists
    `race-debrief` and `car-design-review`. Then ask the agent:
    ```
    Run testMCP, then garage, then practiceRace('Path', 'all') through MATLAB and report the results.
