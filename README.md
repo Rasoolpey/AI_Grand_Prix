@@ -23,13 +23,16 @@ no Simulink or additional toolboxes are required. MATLAB Copilot is optional. Th
    ```powershell
    irm https://raw.githubusercontent.com/Rasoolpey/AI_Grand_Prix/main/setup.ps1 | iex
    ```
+   You don't need to change folder first: whatever folder PowerShell is in, everything is installed into your
+   home folder, **`C:\Users\<your name>\AI_Workshop`**. (To install somewhere else, e.g. a drive with more space, run
+   `$env:AIW_DIR = "D:\AI_Workshop"` first, in the same PowerShell window. Keep the path short: Windows limits path length.)
 4. Paste your Scopus key when asked (it stays hidden; that's normal). Press **Enter** to skip the institution token.
    Then the two **figure tools** ask for keys; both are optional (press Enter to skip):
    a **SciDraw** key (free: https://sci-draw.com → *Settings → API Keys*) and a **Google AI Studio** key for PaperViz
    (https://aistudio.google.com/apikey). No key yet? Press Enter; you can paste any key later into `AI_Tools\my_keys.env`.
 5. Wait for **ALL SET!** The last check starts MATLAB and drives a test race, which takes 1–3 minutes.
 
-You now have:
+You now have, in `C:\Users\<your name>\`:
 ```
 AI_Workshop\
   README.md        this guide
