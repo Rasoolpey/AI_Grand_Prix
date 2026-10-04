@@ -461,10 +461,7 @@ getattr(importlib.import_module(mod), func)()
     $mdVenv     = Install-PyServer 'markitdown' @("markitdown-mcp==$($Pins.MarkItDown)")
 
     # Figures: PaperViz (Google Research's PaperVizAgent). It ships no MCP server, so this installer
-    # writes a small one (the Python below). An old SciDraw server from an earlier install is removed.
-    $oldSci = Join-Path $McpDir 'scidraw'
-    if (Test-Path $oldSci) { Remove-Item $oldSci -Recurse -Force -ErrorAction SilentlyContinue }
-
+    # writes a small one (the Python below).
     $pvDir = Join-Path $McpDir 'paperviz'
     $pvSrc = Join-Path $pvDir 'src'
     $pvPin = Join-Path $pvDir 'SOURCE'
@@ -807,12 +804,6 @@ if __name__ == "__main__":
     }
 
     Merge-McpConfig $researchCfg $servers
-    try {                                             # drop the SciDraw entry an earlier install may have written
-        $c = Get-Content $researchCfg -Raw | ConvertFrom-Json
-        if ($c.mcpServers.PSObject.Properties.Name -contains 'scidraw') {
-            $c.mcpServers.PSObject.Properties.Remove('scidraw'); Write-JsonFile $researchCfg $c
-        }
-    } catch { }
     Ok 'AI_Tools\.agents\mcp_config.json: matlab, google-scholar, scopus, markitdown, paperviz'
     Merge-McpConfig $raceCfg ([ordered]@{ 'matlab' = (New-MatlabServer $RaceDir) })
     Ok 'AI_Grand_Prix\.agents\mcp_config.json: matlab'

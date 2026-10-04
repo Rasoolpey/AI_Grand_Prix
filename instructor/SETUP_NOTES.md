@@ -59,9 +59,6 @@ the PaperBananaBench dataset, Anthropic/OpenAI SDKs stubbed (Gemini only; the An
 260-character limit), and a key/model check before each run (a wrong key fails in seconds instead of after minutes of retries).
 Models: `gemini-3-pro-preview` + `gemini-3-pro-image-preview`, changeable with `PAPERVIZ_MODEL` / `PAPERVIZ_IMAGE_MODEL`.
 
-SciDraw AI was built and then dropped (2026-10-04): it needed a second key with scopes and credits. Re-running `setup.ps1` removes an
-old `scidraw` server and its config entry.
-
 **Tested 2026-10-04 without a real key:** installs with the pinned versions, starts over MCP, lists 3 tools, reaches the Gemini API
 and turns a missing/invalid key into a clear instruction. **Not yet tested:** an actual figure (needs a Gemini key with
 image-model access).
