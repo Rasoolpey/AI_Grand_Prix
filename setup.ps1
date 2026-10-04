@@ -574,6 +574,17 @@ getattr(importlib.import_module(mod), func)()
         Remove-Item $mpTmp -Recurse -Force -ErrorAction SilentlyContinue
         Set-Content -Path $mpStamp -Value $Pins.MattPocockSha -Encoding ASCII
     }
+    # Workshop limit: the upstream skill grills "until the frontier is empty"; cap it at 10 questions.
+    $grillSkill = Join-Path $skillsDir 'grilling\SKILL.md'
+    if ((Test-Path $grillSkill) -and -not (Select-String -Path $grillSkill -Pattern 'Workshop limit' -SimpleMatch -Quiet)) {
+        Add-Content -Path $grillSkill -Encoding ASCII -Value @'
+
+## Workshop limit (overrides the rule above)
+
+Ask **at most 10 questions in total**, counting every numbered question in every round; ask the most important ones first.
+After the 10th answer, stop: summarise what is settled, list anything still open as an explicit assumption, and continue.
+'@
+    }
     Ok 'Skills: AI_Tools -> research-question (+ grill-me, grilling), literature-search, literature-review, research-figure, research-report | AI_Grand_Prix -> race-debrief, car-design-review'
 
     # ================================================================ 8. Self-test

@@ -32,6 +32,11 @@ which always apply.
 
 When the student asks for a step in plain words ("search for papers", "write my review"), use the matching skill.
 
+**Grilling limit: at most 10 questions.** Whenever you interview the student (`research-question`, `grill-me`, `grilling`, or any
+"grill me" request), ask **no more than 10 questions in total**, counting every numbered question in every round. Ask the most
+important ones first. After the 10th answer, stop asking: summarise what is settled, list anything still open as an explicit
+assumption, and move on. This overrides the `grilling` skill's "until the frontier is empty".
+
 ## 3. Tools (MCP servers)
 | Server | Use it for |
 |---|---|

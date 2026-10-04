@@ -7,6 +7,12 @@ instructor/TODO_RACE.md
 .tools/
 AI_Tools/.agents/mcp_config.json
 AI_Tools/.agents/mcp_config.json.bak
+AI_Tools/.agents/skills/grill-me/
+AI_Tools/.agents/skills/grilling/
+AI_Tools/.agents/skills/.mattpocock-version
+AI_Tools/.agents/skills/MATTPOCOCK-LICENSE.txt
+AI_Grand_Prix/.agents/mcp_config.json
+AI_Grand_Prix/.agents/mcp_config.json.bak
 AI_Tools/3_papers/pdf/*.pdf
 AI_Tools/3_papers/text/*.md
 AI_Tools/5_proposal/figure/*.png

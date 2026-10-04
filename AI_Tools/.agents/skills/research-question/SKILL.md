@@ -8,7 +8,8 @@ description: Turn the student's topic in 1_topic/my_topic.md into a precise rese
 1. Read `1_topic/my_topic.md`. If the **Topic** line is still `[...]`, ask the student for their topic, write it into that line, and continue.
 2. Interview the student using the **`grilling`** skill's method: one question at a time, short, and keep pushing until the topic is
    precise. Cover: the exact problem, the scope (years, field, methods), what is out of scope, and what kind of evidence would answer it.
-   About 6–10 questions. Don't search the literature yet.
+   **At most 10 questions in total** (count every numbered question in every round; most important first). After the 10th
+   answer, stop: list anything still open as an explicit assumption in the brief. Don't search the literature yet.
 3. When the question is clear, show the student the brief and ask "Shall I save this?".
 4. Save it to **`1_topic/research_brief.md`**, filling the template's fields (keep its headings). Write nowhere else.
 5. Tell the student: "Step 1 done. Next: run the literature-search skill."
