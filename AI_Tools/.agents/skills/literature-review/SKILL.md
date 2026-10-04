@@ -26,6 +26,6 @@ Ask the student which gap to pursue. Don't continue until they choose.
 
 ## 5. Proposal: `5_proposal/proposal.md`
 Fill every section of the template, including the **Figure brief** and the **MATLAB experiment — PENDING** section (testable claim,
-baseline, metrics, simulation sketch). Then say: "Next: make your figure from the Figure brief, then run the research-report skill."
+baseline, metrics, simulation sketch). Then say: "Next: run the research-figure skill to draw the Figure brief, then the research-report skill."
 
 Never invent findings, numbers or quotes. If it is not in `evidence.csv`, it is not in the review or the proposal.

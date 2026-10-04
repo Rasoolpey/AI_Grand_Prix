@@ -27,7 +27,8 @@ which always apply.
 2. `literature-search` → `2_search/`
 3. *(the student downloads PDFs into `3_papers/pdf/`)*
 4. `literature-review` → `3_papers/text/`, `4_review/`, `5_proposal/`
-5. `research-report` → `6_report/report.md`
+5. `research-figure` → the proposal's figure in `5_proposal/figure/`
+6. `research-report` → `6_report/report.md`
 
 When the student asks for a step in plain words ("search for papers", "write my review"), use the matching skill.
 
@@ -37,7 +38,9 @@ When the student asks for a step in plain words ("search for papers", "write my 
 | `scopus` | Search with citation counts: `scopus_search`, `scopus_get_abstract`, `scopus_get_citation_count` |
 | `google-scholar` | Broad search: `search_google_scholar_key_words`, `search_google_scholar_advanced` |
 | `markitdown` | PDF → text: `convert_to_markdown` with a `file:///` URI |
-| `matlab` | Only for the optional MATLAB experiment, and only if the student asks |
+| `paperviz` | Method/pipeline diagrams (Google PaperViz agents): `paperviz_generate_diagram`, `paperviz_check_job`, `paperviz_check_setup` |
+| `scidraw` | Scientific illustrations (SciDraw AI, costs credits): `scidraw_generate_figure`, `scidraw_check_job`, `scidraw_credits` |
+| `matlab` | Plots for the figure (research-figure skill), and the optional MATLAB experiment if the student asks |
 
 If a tool fails (no key, rate limit, no results), say so plainly and continue with the other source.
 
@@ -48,4 +51,5 @@ If a tool fails (no key, rate limit, no results), say so plainly and continue wi
 - Research gaps are **hypotheses**, not facts.
 
 ## 5. Keys (always applies)
-`my_keys.env` holds the student's Scopus key. **Never print, copy, summarise or move its contents**, and never put a key in any other file.
+`my_keys.env` holds the student's keys (Scopus, SciDraw, Google AI Studio). **Never print, copy, summarise or move its contents**,
+never put a key in any other file, and never ask the student to paste a key into the chat.
