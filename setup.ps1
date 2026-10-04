@@ -329,8 +329,19 @@ PAPERVIZ_IMAGE_MODEL=$(V 'PAPERVIZ_IMAGE_MODEL')
     New-Item -ItemType Directory -Path $WorkshopDir, $McpDir, $LogDir -Force | Out-Null
     (Get-Item $ToolsDir -Force).Attributes = 'Hidden, Directory'   # keep the student's folder tidy
     # Workshop package: one download for both parts. Files a student already has are never overwritten.
+    # If the command runs inside the extracted repo zip (lab PCs have no git), use those files instead of
+    # downloading again. "Extract All" often nests the folder, so look one level down too.
+    $pkgIsLocal = $false
+    $here = $null
+    foreach ($cand in @((Get-Location).Path, (Join-Path (Get-Location).Path "$RepoName-$Branch"))) {
+        if ((Test-Path (Join-Path $cand 'setup.ps1')) -and (Test-Path (Join-Path $cand 'AI_Tools')) -and
+            (Test-Path (Join-Path $cand $RepoName))) { $here = $cand; break }
+    }
     if ($env:AIW_LOCAL_WORKSHOP) {
-        $pkg = $env:AIW_LOCAL_WORKSHOP
+        $pkg = $env:AIW_LOCAL_WORKSHOP; $pkgIsLocal = $true
+    } elseif ($here) {
+        $pkg = $here; $pkgIsLocal = $true
+        Info "Using the workshop files in $here (no second download)"
     } else {
         $pkg = Join-Path $env:TEMP ("aiw_pkg_" + [guid]::NewGuid().ToString('N'))
         Expand-GitHubZip $WorkshopZip $pkg
@@ -346,7 +357,7 @@ PAPERVIZ_IMAGE_MODEL=$(V 'PAPERVIZ_IMAGE_MODEL')
     if (-not (Test-Path (Join-Path $pkg $RepoName))) { throw "Workshop package has no $RepoName folder ($pkg)." }
     Copy-Missing (Join-Path $pkg $RepoName) $RaceDir
     Ok "Part 2 (Grand Prix) ready at $RaceDir"
-    if (-not $env:AIW_LOCAL_WORKSHOP) { Remove-Item $pkg -Recurse -Force -ErrorAction SilentlyContinue }
+    if (-not $pkgIsLocal) { Remove-Item $pkg -Recurse -Force -ErrorAction SilentlyContinue }   # never delete a local copy
 
     # ================================================================ 3. uv + Python
     Step 3 'Installing uv + a private Python (inside the workshop folder)'

@@ -17,20 +17,25 @@ no Simulink or additional toolboxes are required. MATLAB Copilot is optional. Th
 1. **Open VS Code** (it is already on the lab PCs; you don't need to install any program) and add the
    **Google Antigravity extension**: *Extensions* (`Ctrl+Shift+X`) → search `Google Antigravity` → the one by **Google** →
    *Install*. Open the Antigravity panel and sign in with your student Google account.
-   (If you skip this, step 3 installs the extension for you; you still sign in yourself.)
+   (If you skip this, the installer in step 4 adds the extension for you; you still sign in yourself.)
 2. **Get a Scopus API key** at https://dev.elsevier.com → *I want an API key* (register with your university e-mail).
-3. **Open PowerShell** (Start menu → type `PowerShell`) and paste:
+3. **Download the workshop** (no Git needed): open https://github.com/Rasoolpey/AI_Grand_Prix → green **Code** button →
+   **Download ZIP**. In File Explorer, right-click the zip → **Extract All…** → choose your **Documents** folder → *Extract*.
+4. **Open a terminal in that folder:** open **`Documents\AI_Grand_Prix-main`** (if you see another `AI_Grand_Prix-main`
+   inside it, open that one: it is the folder with `setup.ps1` and `README.md` in it). Right-click an empty spot in the folder
+   → **Open in Terminal** (Windows 10: hold *Shift*, right-click → *Open PowerShell window here*). Paste and press Enter:
    ```powershell
    irm https://raw.githubusercontent.com/Rasoolpey/AI_Grand_Prix/main/setup.ps1 | iex
    ```
-   You don't need to change folder first: whatever folder PowerShell is in, everything is installed into your
-   home folder, **`C:\Users\<your name>\AI_Workshop`**. (To install somewhere else, e.g. a drive with more space, run
-   `$env:AIW_DIR = "D:\AI_Workshop"` first, in the same PowerShell window. Keep the path short: Windows limits path length.)
-4. Paste your Scopus key when asked (it stays hidden; that's normal). Press **Enter** to skip the institution token.
+   It uses the files you just extracted and installs everything into **`C:\Users\<your name>\AI_Workshop`**: that is the
+   folder you work in from now on. The downloaded `AI_Grand_Prix-main` folder is not changed; you can delete it afterwards.
+   (To install somewhere else, run `$env:AIW_DIR = "D:\AI_Workshop"` first in the same window. Keep the path short:
+   Windows limits path length.)
+5. Paste your Scopus key when asked (it stays hidden; that's normal). Press **Enter** to skip the institution token.
    Then the two **figure tools** ask for keys; both are optional (press Enter to skip):
    a **SciDraw** key (free: https://sci-draw.com → *Settings → API Keys*) and a **Google AI Studio** key for PaperViz
    (https://aistudio.google.com/apikey). No key yet? Press Enter; you can paste any key later into `AI_Tools\my_keys.env`.
-5. Wait for **ALL SET!** The last check starts MATLAB and drives a test race, which takes 1–3 minutes.
+6. Wait for **ALL SET!** The last check starts MATLAB and drives a test race, which takes 1–3 minutes.
 
 You now have, in `C:\Users\<your name>\`:
 ```
@@ -133,7 +138,8 @@ Use a machine (or a fresh Windows account) that has never run the workshop, so n
 No admin rights, Docker, Git or Python are needed. The installer adds the Google Antigravity extension to VS Code
 (skip that with `$env:AIW_NO_EXTENSION = "1"` to test the manual step).
 
-1. **Install exactly as a student would** (section 1): paste the one-line command into PowerShell.
+1. **Install exactly as a student would** (section 1): download the ZIP, extract it into Documents, open a terminal in
+   `AI_Grand_Prix-main` and paste the one-line command. (Run in any other folder, it downloads the files itself.)
    - To try a branch instead of `main`, first run `$env:AIW_REPO_BRANCH = "<branch>"`.
    - To try a local copy of this repo instead of GitHub, first run `$env:AIW_LOCAL_WORKSHOP = "C:\path\to\AI-Workshop"`.
    - More than one MATLAB? Choose one with `$env:AIW_MATLAB_ROOT = "C:\Program Files\MATLAB\R2026b"`.
