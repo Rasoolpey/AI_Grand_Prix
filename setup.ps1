@@ -395,8 +395,10 @@ SCOPUS_INST_TOKEN=$(V 'SCOPUS_INST_TOKEN')
             Ok "$Name already installed"; return $venv
         }
         New-Item -ItemType Directory -Path $dir -Force | Out-Null
+        Info "Installing $Name (downloads Python packages; can take a few minutes)..."
         if ((Invoke-Native $uv @('venv', $venv, '--python', $Pins.Python, '--allow-existing', '--quiet')) -ne 0) { throw "Could not create the $Name environment." }
-        if ((Invoke-Native $uv (@('pip', 'install', '--quiet', '--python', "$venv\Scripts\python.exe") + $Packages)) -ne 0) { throw "Could not install $Name." }
+        # Not --quiet: uv's progress lines (Resolved / Prepared / Installed) show the step is moving.
+        if ((Invoke-Native $uv (@('pip', 'install', '--python', "$venv\Scripts\python.exe") + $Packages)) -ne 0) { throw "Could not install $Name." }
         Set-Content -Path $stamp -Value $want -Encoding ASCII
         Ok "$Name installed"
         return $venv
@@ -424,6 +426,7 @@ SCOPUS_INST_TOKEN=$(V 'SCOPUS_INST_TOKEN')
     $scholarSrc = Join-Path $scholarDir 'src'
     $scholarPin = Join-Path $scholarDir 'SOURCE'
     if (-not ((Test-Path $scholarPin) -and (Get-Content $scholarPin -Raw).Trim() -eq $Pins.ScholarSha)) {
+        Info 'Downloading the Google Scholar server source from GitHub...'
         Expand-GitHubZip "https://github.com/JackKuo666/Google-Scholar-MCP-Server/archive/$($Pins.ScholarSha).zip" $scholarSrc
         Set-Content -Path $scholarPin -Value $Pins.ScholarSha -Encoding ASCII
     }
