@@ -14,7 +14,8 @@ function car = carDesign()
 %   Every part except gearing adds mass (eq. 1).  Full numbers: PHYSICS.md.
 %
 %   RULE: before you change a part, write down the trade-off you expect
-%   (what gets better, what gets worse, on which path) - then test it.
+%   (what gets better, what gets worse, on which path) in
+%   engineering_log.md - then test it.
 
     car.team    = "Team Name";        % shown on race day
     car.colour  = [0.95 0.35 0.10];   % RGB, each 0-1
