@@ -1,37 +1,10 @@
-<section id="p2-raceday" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<section id="p2-raceday" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'IBM Plex Sans', Arial, sans-serif;padding:120px 128px 150px;display:flex;flex-direction:column;gap:32px">
 <div style="display:flex;flex-direction:column;gap:12px">
-<div style="display:flex;flex-direction:row;align-items:center;gap:24px">
 <p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#B8500F">PART 2 · RACE DAY</p>
-<p style="font-size:24px;font-weight:600;background:#FF8A3D;color:#13203A;padding:6px 20px;border-radius:999px;white-space:nowrap">DRAFT · to be decided</p>
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:64px;font-weight:600;line-height:1.1;color:#13203A">Every car, the same new paths</h2>
 </div>
-<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:72px;font-weight:600;line-height:1.1;color:#13203A">Up to 30 cars, one live race</h2>
-</div>
-<div style="display:flex;flex-direction:row;align-items:center;gap:16px">
-<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:2px solid #E3DDD2;padding:28px;border-radius:16px">
-<x-icon name="PaperPlane" style="color:#B8500F;width:44px;height:44px"></x-icon>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600">Submit</h3>
-<p style="font-size:26px;line-height:1.4;color:#3E4A5C">Car design and controller</p>
-</div>
-<x-shape kind="arrow-right" style="background:#B8500F;width:56px;height:28px"></x-shape>
-<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:2px solid #E3DDD2;padding:28px;border-radius:16px">
-<x-icon name="Verified" style="color:#B8500F;width:44px;height:44px"></x-icon>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600">Qualify</h3>
-<p style="font-size:26px;line-height:1.4;color:#3E4A5C">Each car checked alone; crashes and hangs caught</p>
-</div>
-<x-shape kind="arrow-right" style="background:#B8500F;width:56px;height:28px"></x-shape>
-<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:2px solid #E3DDD2;padding:28px;border-radius:16px">
-<x-icon name="Play" style="color:#B8500F;width:44px;height:44px"></x-icon>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600">Race</h3>
-<p style="font-size:26px;line-height:1.4;color:#3E4A5C">All cars together on the projector</p>
-</div>
-<x-shape kind="arrow-right" style="background:#B8500F;width:56px;height:28px"></x-shape>
-<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:2px solid #E3DDD2;padding:28px;border-radius:16px">
-<x-icon name="Star" style="color:#B8500F;width:44px;height:44px"></x-icon>
-<h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600">Results</h3>
-<p style="font-size:26px;line-height:1.4;color:#3E4A5C">Live leaderboard, every path</p>
-</div>
-</div>
-<p style="font-size:30px;line-height:1.4;color:#13203A">All simulations run on the instructor's machine with the same physics, so the race is fair and nothing drops out.</p>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7280">AI Workshop · Part 2 · draft race format</p>
-<aside>DRAFT. Open: ghost cars (no contact, recommended) or interacting cars; how submissions are collected (shared folder or upload page); the time limit per path. Qualifying in separate MATLAB processes is what protects the live race from a crashing or hanging controller.</aside>
+<div style="display:flex;flex-direction:row;align-items:stretch;gap:16px"><div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:2px solid #E3DDD2;border-radius:16px;padding:28px"><p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;color:#B8500F">1</p><h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600">Submit</h3><p style="font-size:24px;line-height:1.4;color:#3E4A5C">submitCar zips your car, driver and log. Resubmit until the code freeze.</p></div><p style="font-size:36px;color:#B8500F;align-self:center">→</p><div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:2px solid #E3DDD2;border-radius:16px;padding:28px"><p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;color:#B8500F">2</p><h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600">Check</h3><p style="font-size:24px;line-height:1.4;color:#3E4A5C">Code scanned. Each car runs alone in its own MATLAB: a crash or hang stops only that car.</p></div><p style="font-size:36px;color:#B8500F;align-self:center">→</p><div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:2px solid #E3DDD2;border-radius:16px;padding:28px"><p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;color:#B8500F">3</p><h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600">Broadcast</h3><p style="font-size:24px;line-height:1.4;color:#3E4A5C">All runs replayed together on the projector. Cars don't interact; the endurance plays at 2×.</p></div><p style="font-size:36px;color:#B8500F;align-self:center">→</p><div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:2px solid #E3DDD2;border-radius:16px;padding:28px"><p style="font-family:'Space Grotesk', Arial, sans-serif;font-size:44px;font-weight:700;color:#B8500F">4</p><h3 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:32px;font-weight:600">Results</h3><p style="font-size:24px;line-height:1.4;color:#3E4A5C">A leaderboard for each path, the overall standings, the awards.</p></div></div>
+<p style="font-size:28px;line-height:1.4;color:#13203A">Same physics for everyone, run on the instructor's machine: three new layouts, the same three kinds of path. The race is fair, and nothing a car does can stop the others.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6B7280">AI Workshop · Part 2 · race day</p>
+<aside>Pipeline (instructor/race/submissions/README.md): makeFinals(seed) builds and checks the final paths and measures T_ref; collectSubmissions unzips and flags risky code; qualify runs every team in its own MATLAB with a wall-clock limit per path; raceDay plays the recorded broadcast, then the path leaderboards and standings. raceDay('Static', true) is the fallback.</aside>
 </section>
