@@ -4,7 +4,7 @@ Two parts, one folder:
 
 | | Folder | What you do |
 |---|---|---|
-| **Part 1 — AI tools** | `AI_Tools\` | Turn a research topic into a literature review and a research proposal, with an AI agent that searches Google Scholar and Scopus for you |
+| **Part 1 — AI tools** | `AI_Tools\` | Turn a research topic into a literature review and a research proposal, with an AI agent that searches Scopus (Q1 journals) for you and writes an IEEE-format report |
 | **Part 2 — AI Grand Prix** | `AI_Grand_Prix\` | Design an autonomous race car with an AI agent that runs MATLAB for you, then race everyone else |
 
 ---
@@ -59,11 +59,11 @@ Then type these in the agent panel, one at a time. Each result lands in a fixed,
 | Step | You type | Result appears in |
 |---|---|---|
 | 1 | `Run the research-question skill` | `1_topic\research_brief.md` |
-| 2 | `Run the literature-search skill` | `2_search\papers.csv` (30–40 papers with links) |
+| 2 | `Run the literature-search skill` (Scopus, **Q1 journals** of IEEE and Elsevier only) | `2_search\papers.csv` (30–40 papers with links) |
 | 3 | *(you)* Download the PDFs you can, through the library | put them in `3_papers\pdf\` |
-| 4 | `Run the literature-review skill` | `4_review\` then `5_proposal\proposal.md` |
+| 4 | `Run the literature-review skill` (Docling turns the PDFs into text) | `4_review\` then `5_proposal\proposal.md` |
 | 5 | `Run the research-figure skill` (PaperViz, Google's figure method, draws the **Figure brief**; no key needed) | `5_proposal\figure\` |
-| 6 | `Run the research-report skill` | `6_report\report.md` |
+| 6 | `Run the research-report skill` (a short review paper in **IEEE format**, with your figure) | `6_report\report.md`, then double-click `6_report\open_in_overleaf.html` for the **PDF** (free Overleaf account) |
 
 Want the agent to work differently (shorter review, only recent papers, another language)? Write it in **`my_instructions.md`**:
 your rules override the defaults.

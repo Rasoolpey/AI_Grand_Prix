@@ -15,8 +15,13 @@ AI_Grand_Prix/.agents/mcp_config.json
 AI_Grand_Prix/.agents/mcp_config.json.bak
 AI_Tools/3_papers/pdf/*.pdf
 AI_Tools/3_papers/text/*.md
+AI_Tools/3_papers/text/index.csv
 AI_Tools/5_proposal/figure/*.png
 AI_Tools/5_proposal/figure/*.svg
+AI_Tools/6_report/overleaf/
+AI_Tools/6_report/report_overleaf.zip
+AI_Tools/6_report/open_in_overleaf.html
+__pycache__/
 
 # OS / editor
 Thumbs.db

@@ -7,7 +7,7 @@
     "cover", "agenda", "status",
     "vocab-words", "vocab-stack", "vocab-files",
     "setup", "keys",
-    "p1-divider", "p1-topics", "p1-pool", "p1-draw", "p1-workspace", "p1-pipeline", "p1-grill", "p1-search", "p1-review", "p1-proposal", "p1-rules", "p1-outputs",
+    "p1-divider", "p1-topics", "p1-pool", "p1-draw", "p1-workspace", "p1-pipeline", "p1-step1", "p1-step2", "p1-step3", "p1-step4", "p1-step5", "p1-step6", "p1-rules", "p1-outputs",
     "break",
     "p2-divider", "p2-mission", "p2-design", "p2-paths", "p2-scoring", "p2-loop", "p2-raceday",
     "wrap", "open-decisions"

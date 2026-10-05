@@ -50,6 +50,21 @@ Running PaperViz's own code instead would need a Gemini API key with billing: Go
 **To verify on a lab PC:** that the VS Code Antigravity extension offers image generation like the Antigravity app does, and that the
 agent can save the image into `5_proposal\figure\`.
 
+## Part 1 scripts: Scopus Q1 search, Docling, IEEE report
+
+Three skills carry a small Python script (in `scripts\` next to their `SKILL.md`). The agent runs them in the terminal from
+`AI_Tools` with `..\.tools\py\Scripts\python.exe`, so results are deterministic and the agent only does the judging and writing.
+
+| Script | What it does | Why |
+|---|---|---|
+| `literature-search\scripts\scopus_q1.py` | `search`: Scopus Search API with `SRCTYPE(j) AND DOCTYPE(ar OR re)` + publisher filter (IEEE, Elsevier), the 40 most relevant + 15 most cited per query; each journal checked in the Scopus **Serial Title API**: kept if its best CiteScore percentile is ≥ 75 (Q1). Writes `2_search\candidates.csv` (with abstracts) and the search-log table. `add`: checks Google Scholar finds by DOI/title. `finalize`: refills `papers.csv` from the Scopus records, drops non-candidates, ranks. | Before, the agent leaned on Google Scholar and kept non-Q1 venues (SAE papers, conference series, MDPI, Chinese-language journals). |
+| `literature-review\scripts\pdf_to_text.py` | Docling (no OCR) on all PDFs at once → `3_papers\text\*.md`; matches each text to its rank (file name, ScienceDirect PII, DOI, title) → `index.csv`. Falls back to the MarkItDown CLI. | MarkItDown lost the spaces between words on many journal PDFs; Docling keeps headings and tables. ~1–2 s per page on a laptop CPU. |
+| `research-report\scripts\build_report.py` | `6_report\report.md` (front matter + fixed IEEE headings, `[rank]` citations, the figure) → `6_report\overleaf\main.tex` (IEEEtran conference), `references.bib` (IEEEtran.bst, cited papers only), `figures\`; `report_overleaf.zip`; `open_in_overleaf.html` (posts the zip as a data URL to overleaf.com/docs). Stops on unknown citations, a missing figure, an empty title. | Students get a real IEEE PDF without a local LaTeX install. |
+
+Options students can ask for in `my_instructions.md`: other publishers (`--publishers ieee,elsevier,springer` or `any`), Q1–Q2
+(`--max-quartile 2`), years (`--since`). The Q1 check uses the same Scopus key; it needs no extra entitlement (tested on a
+standard key). Abstracts come with the search on campus / VPN / institution token; elsewhere the search runs without them.
+
 ## Shared workshop key (students sign up for nothing)
 
 Students get the Scopus key from one file you share on the day: **`workshop_keys.env`** (Teams / course page / USB). They save it in
@@ -85,6 +100,7 @@ Documents\AI_Grand_Prix-main\   (in place; otherwise %USERPROFILE%\AI_Workshop\)
                    .agents\skills\ (research-question, grill-me, grilling, literature-search, literature-review, research-figure, research-report)
   AI_Grand_Prix\   .agents\skills\ (race-debrief, car-design-review)
   .tools\ (hidden) uv 0.12.22 · Python 3.12 · MCP servers (matlab v0.14.0, Scholar @738d60a, Scopus @4968cc6, markitdown 0.0.1a7) · log\
+                   py\ (Python for the skills' scripts, with Docling 2.133.0) · docling-models\ (layout + tables, ~0.7 GB)
 %USERPROFILE%\.gemini\config\mcp_config.json   matlab, google-scholar, scopus, markitdown (merged in; other servers kept, .bak saved)
 ```
 **MCP servers are global** (Antigravity ignored a workspace `.agents\mcp_config.json` in our tests); **skills are per workspace**.
@@ -99,6 +115,7 @@ is started through `.tools\mcp\run_with_keys.py`, which loads that file at start
 | `AIW_DIR` | Workshop folder (default: the extracted folder when run inside it, else `%USERPROFILE%\AI_Workshop`; use a short path like `C:\AIW` for very long usernames) |
 | `AIW_MATLAB_ROOT` | Force a MATLAB install (default: the newest found) |
 | `AIW_SKIP_TEST=1` | Skip the self-test (it starts MATLAB and drives a baseline lap, about 1–3 min) |
+| `AIW_NO_DOCLING=1` | Skip Docling (~1 GB + 0.7 GB models); the literature review then falls back to MarkItDown |
 | `AIW_NO_SHORTCUTS=1` | No desktop shortcuts |
 | `AIW_LOCAL_WORKSHOP` | Copy `AI_Tools` + `AI_Grand_Prix` from a local copy of this repo instead of GitHub (testing, USB install) |
 | `AIW_REPO_BRANCH` | Branch to download (default `main`) |

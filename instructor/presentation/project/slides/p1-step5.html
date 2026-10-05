@@ -1,0 +1,31 @@
+<section id="p1-step5" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'IBM Plex Sans', Arial, sans-serif;padding:104px 120px 140px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;letter-spacing:2px;color:#1A6B62">PART 1 · STEP 5 OF 6</p>
+<h2 style="font-family:'Space Grotesk', Arial, sans-serif;font-size:60px;font-weight:600;line-height:1.1;color:#13203A">Draw the proposal&#x27;s figure with PaperViz</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:24px;align-items:stretch">
+<p style="flex:1;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:28px;background:#13203A;color:#F5F3EE;padding:22px 30px;border-radius:12px">Run the research-figure skill</p>
+<p style="width:620px;font-family:'JetBrains Mono', 'Courier New', monospace;font-size:22px;color:#1A6B62;background:#E3EFEC;padding:24px 28px;border-radius:12px">→ 5_proposal/figure/&lt;name&gt;.png</p>
+</div>
+<div style="display:flex;flex-direction:row;gap:28px;flex:1;min-height:0">
+<div style="width:560px;flex:none;display:flex;flex-direction:column;gap:14px;background:#FFFFFF;border:2px solid #CFE3DF;padding:28px 32px;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#1A6B62">SKILL</p>
+<h3 style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:32px;font-weight:600;color:#13203A">research-figure</h3>
+<p style="font-size:24px;line-height:1.35;color:#3E4A5C">Runs Google Research&#x27;s PaperViz method inside the agent to draw the proposal&#x27;s Figure brief.</p>
+<ul style="font-size:23px;line-height:1.35;color:#1B2433">
+<li>Tells you the plan first, you confirm</li>
+<li>Never overwrites: _v2, _v3</li>
+<li>You check every label before using it</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px;background:#FFFFFF;border:2px solid #CFE3DF;padding:28px 32px;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:20px;letter-spacing:2px;color:#1A6B62">WHAT IT USES</p>
+<div style="display:flex;flex-direction:row;gap:20px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:18px;font-weight:600;letter-spacing:1px;background:#E3EFEC;color:#1A6B62;padding:6px 0;border-radius:8px;text-align:center;width:128px;flex:none">SKILL</p><div style="display:flex;flex-direction:column;gap:4px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px;color:#13203A">Planner → Stylist → Visualizer → Critic</p><p style="font-size:22px;line-height:1.3;color:#3E4A5C">four roles the agent plays in turn; the Critic sends it back at most twice</p></div></div>
+<div style="display:flex;flex-direction:row;gap:20px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:18px;font-weight:600;letter-spacing:1px;background:#E9E6DF;color:#3E4A5C;padding:6px 0;border-radius:8px;text-align:center;width:128px;flex:none">FILES</p><div style="display:flex;flex-direction:column;gap:4px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px;color:#13203A">prompts.md · style_guide.md</p><p style="font-size:22px;line-height:1.3;color:#3E4A5C">PaperViz&#x27;s own prompts and diagram style guide (Apache-2.0)</p></div></div>
+<div style="display:flex;flex-direction:row;gap:20px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:18px;font-weight:600;letter-spacing:1px;background:#E9E6DF;color:#3E4A5C;padding:6px 0;border-radius:8px;text-align:center;width:128px;flex:none">BUILT-IN</p><div style="display:flex;flex-direction:column;gap:4px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px;color:#13203A">image generation  (Antigravity, 16:9)</p><p style="font-size:22px;line-height:1.3;color:#3E4A5C">draws the figure: no API key, no cost</p></div></div>
+<div style="display:flex;flex-direction:row;gap:20px;align-items:flex-start"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:18px;font-weight:600;letter-spacing:1px;background:#E9E6DF;color:#3E4A5C;padding:6px 0;border-radius:8px;text-align:center;width:128px;flex:none">FILES</p><div style="display:flex;flex-direction:column;gap:4px"><p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:23px;color:#13203A">proposal.md: Method + Figure brief</p><p style="font-size:22px;line-height:1.3;color:#3E4A5C">the input; the final description is saved next to the image</p></div></div>
+</div>
+</div>
+<p style="position:absolute;left:120px;bottom:56px;width:1680px;font-size:24px;color:#6B7280">AI Workshop · Part 1 · step 5 of 6</p>
+<aside>PaperViz is github.com/google-research/papervizagent. Running its own code would need a paid Gemini API key; as a skill the agent follows the same prompts and draws with Antigravity&#x27;s built-in image model. Generated figures can contain wrong labels or invented details: students must check them.</aside>
+</section>

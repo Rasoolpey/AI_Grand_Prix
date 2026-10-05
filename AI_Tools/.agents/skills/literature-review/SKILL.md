@@ -5,12 +5,19 @@ description: Convert the PDFs in 3_papers/pdf to text, build the evidence table 
 
 # Literature review → gaps → proposal (steps 4–5)
 
-**Inputs:** `2_search/papers.csv`, `3_papers/pdf/`. **Outputs:** `3_papers/text/`, `4_review/evidence.csv`, `4_review/review.md`,
-`5_proposal/proposal.md` only.
+**Inputs:** `2_search/papers.csv`, `2_search/candidates.csv`, `3_papers/pdf/`. **Outputs:** `3_papers/text/`,
+`4_review/evidence.csv`, `4_review/review.md`, `5_proposal/proposal.md` only.
 
-## 1. Text
-For each PDF in `3_papers/pdf/`: `markitdown` → `convert_to_markdown` with its `file:///` URI → save as `3_papers/text/<same name>.md`.
-Papers in `papers.csv` without a PDF: use `scopus_get_abstract` (or the Scholar snippet). These are **abstract-only**.
+## 1. Text (Docling)
+Convert all PDFs at once with **Docling** (keeps headings, paragraphs and tables). In the terminal, from the `AI_Tools` folder:
+```
+..\.tools\py\Scripts\python.exe .agents\skills\literature-review\scripts\pdf_to_text.py
+```
+It writes `3_papers/text/<same name>.md` for each PDF (about 1–2 s per page; tell the student it takes a few minutes), matches each
+text to its rank in `papers.csv` (file name, DOI or title), writes `3_papers/text/index.csv`, and lists the **abstract-only** papers
+(no PDF). If a text is `NOT MATCHED`, open its first lines and find the paper yourself. Read the texts from the files: don't
+convert PDFs any other way. (If Docling is missing, the script falls back to MarkItDown and says so.)
+Abstract-only papers: their abstract is in `2_search/candidates.csv` (`abstract` column); if it is empty, use `scopus_get_abstract`.
 
 ## 2. Evidence table: `4_review/evidence.csv`
 Keep the header `rank,doi,evidence_level,method,key_finding,limitation,location`. One row per paper; `evidence_level` = `full-text` or

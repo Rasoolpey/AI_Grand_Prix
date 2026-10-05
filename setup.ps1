@@ -21,14 +21,14 @@
      AI_Grand_Prix-main\  (or AI_Workshop\)
        AI_Tools\        Part 1 workspace: AI tools + research   (my_keys.env = YOUR Scopus key; skills)
        AI_Grand_Prix\   Part 2 workspace: the race              (skills)
-       .tools\          uv, a private Python, all MCP servers, logs (you never need to open this)
+       .tools\          uv, a private Python, all MCP servers, Docling, logs (you never need to open this)
 
  Steps:
    1. Find MATLAB                         6. Your Scopus key -> AI_Tools\my_keys.env
    2. Workshop files                      7. Global MCP config + per-workspace skills
-   3. uv + private Python                 8. Self-test over MCP (incl. a baseline race)
+   3. uv + private Python                 8. Self-test (MCP servers, Scopus Q1 search, Docling, a baseline race)
    4. MATLAB MCP Server (MathWorks)       9. VS Code extension + desktop shortcuts
-   5. Google Scholar, Scopus, MarkItDown
+   5. Google Scholar, Scopus, MarkItDown + Docling (PDF -> text) for the skills' scripts
 
  Safe to run again — it never overwrites your own work.
 
@@ -40,6 +40,7 @@
    AIW_REPO_BRANCH      GitHub branch to download   (default main)
    AIW_NO_SHORTCUTS=1   don't create desktop shortcuts
    AIW_NO_EXTENSION=1   don't install the Google Antigravity extension in VS Code
+   AIW_NO_DOCLING=1     skip Docling (~1 GB + 0.7 GB models); the literature review then uses MarkItDown
    AIW_MCP_CONFIG       MCP config file to merge the servers into (default %USERPROFILE%\.gemini\config\mcp_config.json)
    AIW_LOG_DIR          log folder (default .tools\log; %LOCALAPPDATA%\AIW\log when that path is too long)
    AIW_KEYS_FILE        a workshop_keys.env to read the Scopus key from (default: searched for)
@@ -72,6 +73,8 @@ function Install-AIWorkshop {
         ScholarSha    = '738d60a4d69464731e7c5b3a61767c06ff2cec0d'    # github.com/JackKuo666/Google-Scholar-MCP-Server
         ScopusSha     = '4968cc6231d129625a8448b020f5c58228d7689d'    # github.com/JOSETRA44/scopus-mcp
         MarkItDown    = '0.0.1a7'                                     # pypi markitdown-mcp (microsoft)
+        Docling       = '2.133.0'                                     # pypi docling-slim (IBM): PDF -> Markdown
+        OpenCv        = '5.0.0.93'                                    # pypi opencv-python-headless (Docling's table model)
         MattPocockSha = 'd81f3a183412e71a5b1e84ca21bc1a35eea03a60'    # github.com/mattpocock/skills
     }
 
@@ -427,7 +430,7 @@ SCOPUS_INST_TOKEN=$(V 'SCOPUS_INST_TOKEN')
     }
 
     # ================================================================ 5. Research MCP servers
-    Step 5 'Research MCP servers (Google Scholar, Scopus, MarkItDown)'
+    Step 5 'Research tools (Google Scholar, Scopus, MarkItDown servers + Docling)'
 
     # Google Scholar — not on PyPI, so fetch the pinned source and run it through a small wrapper.
     $scholarDir = Join-Path $McpDir 'google-scholar'
@@ -475,6 +478,38 @@ getattr(importlib.import_module(mod), func)()
     # Scholar and Scopus use FastMCP, which mcp 2.x removed -> pin them to mcp 1.x. (MarkItDown needs mcp 2.x.)
     $scopusVenv = Install-PyServer 'scopus' @("https://github.com/JOSETRA44/scopus-mcp/archive/$($Pins.ScopusSha).zip", 'mcp<2')
     $mdVenv     = Install-PyServer 'markitdown' @("markitdown-mcp==$($Pins.MarkItDown)")
+
+    # The skills' scripts (Scopus Q1 search, PDF -> text, IEEE report) run with this Python: from AI_Tools it is
+    # ..\.tools\py\Scripts\python.exe. It holds Docling (IBM), which turns the PDFs into much cleaner Markdown than
+    # MarkItDown (headings, tables, no run-together words). Slim install: PDF only, no OCR (journal PDFs have text).
+    # About 1 GB installed + 0.7 GB models. If it fails the review falls back to MarkItDown, so only warn.
+    $PyDir   = Join-Path $ToolsDir 'py'
+    $PyExe   = Join-Path $PyDir 'Scripts\python.exe'
+    $Models  = Join-Path $ToolsDir 'docling-models'
+    $pyStamp = Join-Path $PyDir 'INSTALLED'
+    $pyWant  = @("docling-slim[cli,convert-core,format-pdf,models-local]==$($Pins.Docling)", "opencv-python-headless==$($Pins.OpenCv)")
+    if ((Invoke-Native $uv @('venv', $PyDir, '--python', $Pins.Python, '--allow-existing', '--quiet')) -ne 0) {
+        Warn 'Could not create the Python for the research scripts (.tools\py). Run setup again.'
+    } elseif ($env:AIW_NO_DOCLING -eq '1') {
+        Info 'Docling skipped (AIW_NO_DOCLING=1): the literature review uses MarkItDown.'
+    } elseif ((Test-Path $pyStamp) -and (Get-Content $pyStamp -Raw).Trim() -eq ($pyWant -join ' ') -and
+              (Test-Path (Join-Path $Models 'docling-project--docling-models'))) {
+        Ok 'Docling already installed'
+    } else {
+        Info 'Installing Docling (PDF -> text for the literature review; about 1 GB, a few minutes)...'
+        if ((Invoke-Native $uv (@('pip', 'install', '--python', $PyExe) + $pyWant)) -ne 0) {
+            Warn 'Docling did not install: the literature review will use MarkItDown instead (lower quality). Run setup again to retry.'
+        } else {
+            Info 'Downloading the Docling models (page layout + tables, about 0.7 GB)...'
+            $dlTools = Join-Path $PyDir 'Scripts\docling-tools.exe'
+            if ((Invoke-Native $dlTools @('models', 'download', 'layout', 'tableformer', '-o', $Models, '--quiet')) -eq 0) {
+                Set-Content -Path $pyStamp -Value ($pyWant -join ' ') -Encoding ASCII
+                Ok 'Docling installed (PDF -> text)'
+            } else {
+                Warn 'The Docling models did not download. Run setup again (otherwise Docling downloads them on first use).'
+            }
+        }
+    }
 
     # The download cache (~400 MB) is not needed once the servers are installed.
     $null = Invoke-Native $uv @('cache', 'clean', '--quiet')
@@ -602,6 +637,7 @@ After the 10th answer, stop: summarise what is settled, list anything still open
 '@
     }
     Ok 'Skills: AI_Tools -> research-question (+ grill-me, grilling), literature-search, literature-review, research-figure, research-report | AI_Grand_Prix -> race-debrief, car-design-review'
+    Info 'Skill scripts run with .tools\py: Scopus Q1 search, Docling PDF -> text, IEEE report for Overleaf'
 
     # ================================================================ 8. Self-test
     Step 8 'Self-test: talking to every MCP server like Antigravity will'
@@ -617,6 +653,22 @@ After the 10th answer, stop: summarise what is settled, list anything still open
             } catch {
                 Warn "$name did not start: $($_.Exception.Message)"
             } finally { if ($s) { Stop-McpSession $s } }
+        }
+
+        # The skills' scripts: the Scopus Q1 search (key, search, journal metrics) and Docling.
+        $q1 = Join-Path $ResearchDir '.agents\skills\literature-search\scripts\scopus_q1.py'
+        if (-not (Test-Path $PyExe)) {
+            Warn 'The Python for the research scripts (.tools\py) is missing. Run setup again.'
+        } else {
+            if ($scopusKey -and (Test-Path $q1)) {
+                $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+                try { $out = (& $PyExe $q1 selftest 2>&1 | Out-String).Trim() } finally { $ErrorActionPreference = $old }
+                if ($LASTEXITCODE -eq 0) { Ok "Scopus Q1 search: $out" } else { Warn "Scopus Q1 search: $out" }
+            }
+            if ($env:AIW_NO_DOCLING -ne '1') {
+                if ((Invoke-Native $PyExe @('-c', 'import docling.document_converter')) -eq 0) { Ok 'Docling ready (PDF -> text)' }
+                else { Warn 'Docling does not start: the literature review will use MarkItDown. Run setup again to retry.' }
+            }
         }
 
         Info 'MATLAB: starting MATLAB through MCP and running a baseline race (1-3 min)...'

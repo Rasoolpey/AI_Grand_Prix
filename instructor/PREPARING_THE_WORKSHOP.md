@@ -164,10 +164,10 @@ Edit `setup.ps1` in three places:
 | 2 | In place (run inside the extracted ZIP): uses that folder as is. Otherwise copies `AI_Tools\` and `AI_Grand_Prix\` (from GitHub) into `AI_Workshop`. Creates a hidden `.tools\`. |
 | 3 | Installs pinned `uv` and a private Python 3.12 inside `.tools\`. |
 | 4 | Downloads the MATLAB MCP server. |
-| 5 | Installs the Google Scholar, Scopus and MarkItDown servers (separate venvs). |
+| 5 | Installs the Google Scholar, Scopus and MarkItDown servers (separate venvs), and `.tools\py` with Docling + its models for the skills' scripts. |
 | 6 | Scopus key: from an environment variable, a `workshop_keys*` file (next to the ZIP, or in Downloads/Documents/Desktop), the existing `my_keys.env`, or a prompt. Tests the key, then writes `AI_Tools\my_keys.env`. |
 | 7 | Merges the 4 servers into `%USERPROFILE%\.gemini\config\mcp_config.json` (or `$env:AIW_MCP_CONFIG`) and deletes any legacy `<workspace>\.agents\mcp_config.json`. Downloads the `grill-me` and `grilling` skills and appends the workshop's 10-question limit to `grilling`. |
-| 8 | Self-test: talks MCP to each server; runs `practiceRace('Headless', true)` through MATLAB and expects `finished`, `totalTime` and `score` in the result. |
+| 8 | Self-test: talks MCP to each server; runs `scopus_q1.py selftest` and imports Docling; runs `practiceRace('Headless', true)` through MATLAB and expects `finished`, `totalTime` and `score` in the result. |
 | 9 | Installs the `google.google-antigravity` VS Code extension and creates 2 desktop shortcuts (one per workspace). |
 
 Optional switches (set before running):
