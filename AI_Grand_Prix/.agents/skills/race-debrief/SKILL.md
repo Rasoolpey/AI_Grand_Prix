@@ -1,15 +1,14 @@
 ---
 name: race-debrief
-description: Run a headless practice race on one path in MATLAB, export the lap report, and ask the student what they think limits the car. Then read grip use, battery and checkpoints, name the limiting factor (power / grip / energy / control), compare it with the student's view, and propose ONE targeted improvement for the student to approve, change or reject. Use when the student asks how the car is doing on a path, why it is slow, crashing or running out of energy, or what to improve next.
+description: Run a practice race on one path in MATLAB, export the lap report, read grip use, speed, battery and checkpoints, name what limits the car (power / grip / energy / control) in plain words, and propose ONE targeted improvement (usually to the controller) for the student to accept or reject; then make it and test it on all four paths. Use when the student asks to improve the driver or the controller, how the car is doing on a path, why it is slow, crashing or running out of energy, or what to improve next.
 ---
 
 # Race debrief
 
-The student runs the engineering loop. You run the race, read the telemetry and test their diagnosis against the data.
-They decide what to change and whether to keep it.
+You find what limits the car and fix it one change at a time; the student says yes or no. Keep every reply short and plain.
 
-1. Pick the path the student asks about (`"drag"`, `"technical"`, `"endurance"`, `"mud"` or `"wet"`; default: their weakest path
-   from `student/engineering_log.md`, else `"technical"`). Run this through the `matlab` MCP server
+1. Pick the path the student asks about (`"drag"`, `"technical"`, `"endurance"`, `"mud"` or `"wet"`; default: their weakest
+   path from the latest four-path results, else `"technical"`). Run this through the `matlab` MCP server
    (`evaluate_matlab_code`), with `P` set to that path:
    ```matlab
    cd(fileparts(which('practiceRace'))); P = "technical";
@@ -25,14 +24,7 @@ They decide what to change and whether to keep it.
    plotLap(r); exportgraphics(gcf, fullfile(pwd, 'lapPlot.png'), 'Resolution', 110); close(gcf);
    ```
 
-2. **Show the result and ask first.** Give the one-line result (time, penalties, total, efficiency = benchmark ÷ total,
-   energy, and the change since the last run if you know it). Tell them the lap report is in `lapPlot.png` (six panels:
-   trajectory coloured by **grip use** (x = understeer), **speed vs the eq. 6 corner limit** and the benchmark,
-   throttle/brake, **battery**, elevation, **friction circle**). Then ask, in one line:
-   *"Open lapPlot.png: what do you think limits the car here (power, grip, energy or control), and which panel shows it?"*
-   Wait for the answer. Skip this step if their message already gives a diagnosis, or they say "just tell me".
-
-3. Open `lapPlot.png` yourself and name the **limiting factor** from the evidence:
+2. Open `lapPlot.png` and name the **limiting factor** from the evidence:
    - **power / gearing**: full throttle on straights, speed flat at v_gear or rising slowly; the benchmark is close.
    - **grip**: grip use near 1 in corners, understeer marks, speed at the eq. 6 line; a tyre or aero question. On mud
      and wet points the grip is mu x 0.6 (the eq. 6 line drops there): does the driver read `obs.previewPoints(:,4)`?
@@ -40,15 +32,12 @@ They decide what to change and whether to keep it.
    - **control**: speed well below the eq. 6 line and the benchmark, braking early or too long, oscillating steering,
      off-track incidents; a controller question (the most common one).
 
-4. **Report to the student**, briefly:
-   - **Your diagnosis vs theirs:** the limiting factor, the panel and the section of the path that shows it. Say plainly
-     whether you agree with them, and if not, what in the data points the other way.
-   - **Root cause:** your hypothesis, marked as a hypothesis.
-   - **One change:** if they proposed one, assess theirs first. Otherwise propose one, in `controller.m` / `robotConfig.m`
-     or a part in `carDesign.m`: why it should help (name the equation), and the risk on the *other* paths.
-   - End with: *"Do you want this change, a different one, or none?"*
+3. **Report, briefly:** the one-line result (time, penalties, energy); what limits the car, in plain words, and where you
+   see it (the lap report is in `lapPlot.png`: grip use, speed vs the eq. 6 corner limit, throttle/brake, battery,
+   elevation, friction circle); then **one proposed change** (usually in `controller.m` or `robotConfig.m`): what it does,
+   why it should help (name the equation), and the risk on the other paths. If the student proposed a change, assess
+   theirs first. End with: *"Shall I make this change?"*
 
-5. **Don't change anything** until the student agrees; they may change your proposal. After the change, run this skill
-   again, show before → after, and ask whether to **keep or undo** it. If they ask, add the before → after numbers to
-   the change log in `student/engineering_log.md` (the 📏 column only). Before finishing, check all paths:
-   `practiceRace('Path', 'all')`. A better overall is saved as their best model automatically; say whether it was.
+4. **Make it** only when they agree, then run the four-path test from `AGENTS.md` and show before → after. Ask: keep it or
+   undo it? Then remind them to race their ghost in MATLAB, `practiceRace('Path', 'all')`: if the overall beats their best,
+   it becomes their new best model. Never hard-code anything about the practice tracks.

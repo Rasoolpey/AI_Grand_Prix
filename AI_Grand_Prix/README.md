@@ -218,35 +218,31 @@ On race day, your instructor puts every team's best model in one folder and race
 
 | You: the race engineer | The agent: your pit crew |
 |---|---|
-| Decide which path to work on, and why | Runs MATLAB: `garage`, `practiceRace`, `plotLap` |
-| Choose the designs to compare, and **predict** the result first | Gets the numbers and checks your prediction against the equations |
-| **Choose** the parts and the driving strategy | Lays out the options, pros and cons, when you ask |
-| Approve, change or reject every change; keep it or undo it | Makes **one** change, runs it, reports the numbers |
-| Write your trade-off explanation in your own words | Checks it against the data, but doesn't write it for you |
-| Keep `student/engineering_log.md` | Fills in measured numbers in the log when you ask |
+| Race the car and look at the results | Runs MATLAB for you: `garage`, `practiceRace`, `plotLap` |
+| Ask for options | Suggests 2–3 changes, with what each gains and costs |
+| **Pick one**, or ask for something else | Makes **that one** change and tests it on all four paths |
+| Ask "why?" whenever it is unclear | Explains in simple words, with the physics |
+| Race your ghost; a better overall is saved | Never decides for you, never saves your best model |
 
-The agent is set up to ask you before it decides anything (its rules are in `AGENTS.md`). If it decides for you anyway,
-see **Taking back control** below.
+The agent's rules are in `AGENTS.md` (you don't need to read them). If it decides for you anyway, see **Taking back
+control** below.
 
 ---
 
 ## 🧭 Your steps
 
-Everything you decide goes in **`student/engineering_log.md`**. It's handed in with your car, and the judges read it for
-🧠 *best engineering explanation* and 🤖 *best use of the agent*.
+| Step | What you do | Where |
+|---|---|---|
+| **1. Race the starting car** | In `student/carDesign.m`, change `"Team Name"` to your team name and save. In **MATLAB**, make this `AI_Grand_Prix` folder the current folder (address bar, or `cd('<your workshop folder>\AI_Grand_Prix')`), then run `garage`, `practiceRace` (watch it drive) and `practiceRace('Path', 'all')`. Note your overall score and your **weakest path**. | MATLAB |
+| **2. Ask the AI to improve the car** | `Read AGENTS.md. I raced my car with practiceRace('Path', 'all'). Which path is my weakest, and why? Suggest 2–3 changes to my car's parts, with what each gains and costs. Don't change anything yet.` Then pick one: `Make change 2 and test it on all four paths.` | agent panel |
+| **3. Ask the AI to improve the driver** | `Improve my controller so the car is faster on my weakest path without new penalties. Explain the change in simple words, make one change, and test it on all four paths.` Not better? `Undo that change.` | agent panel |
+| **4. Race your ghost** | `practiceRace('Path', 'all')`: your car against your best run so far. A better overall is saved as your best model; a worse one is not. | MATLAB |
+| **5. Repeat 2–4, then hand in** | `bestModel` (check your team name and score), then `submitCar`. | MATLAB |
 
-| Step | Time | You do, or type to the agent | You decide (write it in the log) |
-|---|---|---|---|
-| **1. Meet your car** | 5 min | Write your **team name** in `student/carDesign.m` (`car.team`). Then yourself, in MATLAB: make this `AI_Grand_Prix` folder the current folder (MATLAB's address bar, or `cd('<your workshop folder>\AI_Grand_Prix')`), then `garage`, `practiceRace` (watch it drive), and `practiceRace('Path', 'all')`: your first best model is saved | Your baseline scores, your **weakest path**, and your guess *why* |
-| **2. Brief the agent** | 3 min | `Read AGENTS.md and the project, then tell me in 5 bullet points what you understood. Don't change anything.` | Is its summary right? Correct it if not |
-| **3. Design the car** | 10 min | Read *Find your sweet spot*. Write 1–2 candidate designs and your **prediction** in the log. Then: `Run the car-design-review skill on the candidates in my engineering log.` | The design you race, and your **trade-off** in your own words (3–4 sentences, with numbers). Then edit `student/carDesign.m` yourself (it's 5 lines) |
-| **4. Choose how to drive** | 5 min | `Propose three ways my controller could choose its target speed from obs.previewPoints and obs.car. Pros, cons, and the risk on new layouts. Don't implement anything.` | Which approach, and why |
-| **5. Improve, one change at a time** | 20 min, repeat | `Run the race-debrief skill on the technical path.` (or your weakest path). After each change, run `practiceRace('Path', 'all')` yourself: you race your best model's ghost, and a better overall is saved | What limits the car (say it *before* the agent does). Then approve, change or reject its one proposal, and after the run: keep it or undo it |
-| **6. Check and hand in** | 5 min | `Run Pattern 7 from AGENT_GUIDE.md.` (the overfitting check), then `bestModel` and `submitCar` | Is your best model ready for layouts you have never seen? |
-
-Steps 5–6 come back in the **final sprint** before the code freeze. You can go back to step 3 at any time: once your
-controller drives better, a different car may be the better choice. Your best model is safe while you experiment. More
-prompts, and how to write your own: [AGENT_GUIDE.md](AGENT_GUIDE.md).
+Keep repeating steps 2–4 until the code freeze: a better driver may make a different car the better choice. Your best model
+is safe while you experiment. Optional: note what you tried, and why, in `student/engineering_log.md`; it is handed in with
+your model and the judges read it for 🧠 *best engineering explanation* and 🤖 *best use of the agent*. More prompt ideas:
+[AGENT_GUIDE.md](AGENT_GUIDE.md).
 
 ### ✅ Check the agent's work
 - It **ran the race** after every change, and the numbers come from that run, not from "this should be faster".

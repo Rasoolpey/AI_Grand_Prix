@@ -1,33 +1,27 @@
 ---
 name: car-design-review
-description: Help the student compare their own candidate car designs (motor, battery, tyres, aero, gearing). Collects their candidates and predictions, gets the Garage numbers, scores each design the way race day does, and checks each prediction against the equation sheet. The student chooses the design and writes the trade-off; this skill never picks for them and changes student/carDesign.m only when they say so. Use when the student asks which parts to choose, whether to change a part, or why a design is fast or slow on a path.
+description: Improve the student's car design (motor, battery, tyres, aero, gearing). Finds the weakest path, proposes 2-3 candidate designs within 80 credits (or uses the student's own), gets the Garage numbers for each, scores them the way race day does, and explains each trade-off with the equation sheet. The student picks; then this skill edits student/carDesign.m and tests the new car on all four paths. Use when the student asks to improve their car, which parts to choose, whether to change a part, or why a design is fast or slow on a path.
 ---
 
 # Car design review
 
-The student designs the car. Your job is to get them the numbers fast and to test their reasoning against the physics.
-The choice and the written trade-off are theirs.
+You suggest and test; the student picks. Keep every reply short and plain.
 
-1. **Read** `student/carDesign.m`, `student/engineering_log.md` (sections 1 and 2), `README.md` (parts table) and
-   `PHYSICS.md`.
+1. **Read** `student/carDesign.m`, `README.md` (parts table) and `PHYSICS.md`. If you have no results for the current car
+   yet, run the four-path test from `AGENTS.md` first.
 
-2. **Get the student's candidates and predictions.** Look in the log first. If something is missing, ask for it in **one**
-   message and wait:
-   - which path worries them most (their weakest path from the baseline run);
-   - 1–2 candidate designs, each changing **one or two parts** from their current car;
-   - for each candidate, their prediction: what gets better and what gets worse, on which path.
+2. **Candidates.** If the student named designs to compare, use those. Otherwise propose **2–3 yourself**, each changing
+   **one or two parts** of the current car and aimed at the weakest path, within 80 credits. For each, one line on what it
+   should gain and what it costs (e.g. *soft tyres: more grip, faster corners (eq. 6); more rolling loss, more energy
+   (eqs. 4, 8)*).
 
-   If they ask for ideas, list the single-part swaps that target their worry path, each with the direction of the effect
-   and the equation (e.g. *soft tyres: μ up, so faster corners (eq. 6); C_rr up, so more energy (eqs. 4, 8)*). Give no
-   numbers and no favourite yet; let them pick.
-
-3. **Get the numbers** without editing any file, through the `matlab` MCP server. Set `B` and `C` to **their** candidates:
+3. **Get the numbers** without editing any file, through the `matlab` MCP server. Set `B` and `C` to the candidates:
    ```matlab
    cd(fileparts(which('garage')));
    base = carDesign();
    A = base;                                   % current car
-   B = base; B.tyres = "soft";                 % the student's candidate B
-   C = base; C.motor = "5.5kW";                % the student's candidate C (or delete this line)
+   B = base; B.tyres = "soft";                 % candidate B
+   C = base; C.motor = "5.5kW";                % candidate C (or delete this line)
    paths = ["drag", "technical", "endurance", "mud"];
    for d = {A, B, C}
        [~, g] = evalc('garage(d{1}, ''Plot'', false)');            % evalc: keep the spec sheet out of the reply
@@ -42,27 +36,14 @@ The choice and the written trade-off are theirs.
    end
    ```
    `!` after the cost means over budget (that car cannot race). `(capped)` means the estimate had to save energy on the
-   endurance. Path order: drag, technical, endurance, mud. Scores use the same rule as race day: s = min(120, 100 × T_ref / T), overall = 0.6 × mean + 0.4 × min.
+   endurance. Path order: drag, technical, endurance, mud. Scores use the race-day rule: s = min(120, 100 × T_ref / T),
+   overall = 0.6 × mean + 0.4 × min.
 
-4. **Report, briefly:**
-   - **One table:** each candidate's parts, cost, mass, estimated time per path, endurance energy, path scores, overall
-     and weakest path.
-   - **Their prediction against the numbers**, candidate by candidate: right, partly right or wrong, and the equation
-     that explains it. This is the most useful part of the reply, so make it concrete.
-   - **Estimate vs reality:** the estimates assume near-perfect driving on the centreline. If the log (or a run) has the
-     current car's measured overall score, put it next to its estimated overall, so they see how much of the gap is the
-     car and how much is the driver.
-   - **No recommendation** unless they ask for one. End with: *"Which design do you want to race? Write your choice and
-     your trade-off in the log, and I'll check it against these numbers."*
+4. **Report, briefly:** one small table (each candidate's parts, cost, estimated score per path, overall, weakest path),
+   then one line per candidate: what it gains, what it costs, which equation explains it. Say that these are
+   **estimates** with a near-perfect driver: the real gain also depends on the controller. End with:
+   *"Which one should I build: A, B or C?"* If they ask which you would pick, say so, and why.
 
-   If they ask, copy the numbers into the 📏 table of section 2 of the log. Don't touch their prediction or decision
-   lines.
-
-5. **Check their trade-off** once they've written it in the log. Are the numbers right? Is it the right equation? Is a
-   cost missing (mass, energy, another path)? Point to the sentence and say what to fix. Don't rewrite it: it is the
-   team's written deliverable.
-
-6. **Build it.** The student edits `student/carDesign.m` or tells you to. Then run `garage` and
-   `practiceRace('Path', 'all')` and compare with the estimates. If the real result is far from the estimate, say why
-   (usually the controller) and ask whether to start the `race-debrief` skill. If the overall beat their best, the run
-   was saved as their best model: tell them. If not, their best model is unchanged.
+5. **Build it** when they choose: edit `student/carDesign.m` (parts only; keep their team name and colour), then run the
+   four-path test from `AGENTS.md` and show before → after. Ask: keep it or undo it? Then remind them to race their ghost
+   in MATLAB, `practiceRace('Path', 'all')`: if the overall beats their best, it becomes their new best model.

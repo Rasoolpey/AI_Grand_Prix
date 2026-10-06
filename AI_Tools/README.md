@@ -6,7 +6,7 @@ as your assistant.
 ## Before you start (2 minutes)
 1. 🔑 Open **`my_keys.env`**, paste your Scopus key after `SCOPUS_API_KEY=`, save, and reload VS Code (`Ctrl+Shift+P` → *Reload Window*).
    (If you already gave your key during setup, it's there.)
-2. Write your topic in **`1_topic/my_topic.md`**: your own topic, or the one you drew from the topic pool.
+2. Write your topic in **`1_topic/my_topic.md`**: replace the text in `[brackets]` with your name and your topic, and save.
 3. Optional: write your own rules for the agent in **`my_instructions.md`** (e.g. "only papers from the last 5 years").
 
 ## The steps
