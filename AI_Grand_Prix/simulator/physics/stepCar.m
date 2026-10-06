@@ -12,7 +12,8 @@ function [s, info] = stepCar(car, s, throttle, steer, road, dt)
 %             energyJ (battery energy left, J)
 %   throttle  [-1, 1]: > 0 drive, < 0 brake (fraction of the grip budget)
 %   steer     [-1, 1]: +1 = full LEFT (counter-clockwise), -1 = full right
-%   road      struct: alpha (road angle, rad), muFactor (1 dry, < 1 wet)
+%   road      struct: alpha (road angle, rad), muFactor (1 dry, < 1 wet or mud),
+%             rollFactor (optional; 1 normal, 4 on mud)
 %   dt        time step (s)
 %
 %   Order within a step (semi-implicit Euler, deterministic):
@@ -44,7 +45,8 @@ function [s, info] = stepCar(car, s, throttle, steer, road, dt)
     s.delta = s.delta + max(-dmax, min(dmax, target - s.delta));
 
     % 2. Grip budget
-    [Fdrag, Froll, Fgrade, N] = roadForces(car, s.v, road.alpha);
+    rf = 1;  if isfield(road, 'rollFactor'), rf = road.rollFactor; end
+    [Fdrag, Froll, Fgrade, N] = roadForces(car, s.v, road.alpha, rf);
     G = car.mu * road.muFactor * N;
 
     % 3. Sideways demand and understeer

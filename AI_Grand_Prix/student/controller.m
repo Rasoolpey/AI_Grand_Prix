@@ -13,8 +13,9 @@ function command = controller(obs, config)
 %   obs.time                     time since the start (s)
 %   obs.dt                       time step (0.02 s)
 %   obs.trackWidth               road width (m)
-%   obs.previewPoints  N x 4     the next ~60 centreline points, ~1 m apart,
-%                                nearest first:  [x  y  grade(%)  wet(0/1)]
+%   obs.previewPoints  N x 5     the next ~60 centreline points, ~1 m apart,
+%                                nearest first:  [x  y  grade(%)  slippery(0/1)  mud(0/1)]
+%                                slippery = wet or mud: grip x 0.6;  mud: rolling resistance x 4 too
 %                                (fewer near the end of an open path)
 %   obs.car            the car you built: mass, mu, Crr, power, CdA, ClA,
 %                      vGear, Fgear, wheelbase, maxSteer, steerRate, eta,

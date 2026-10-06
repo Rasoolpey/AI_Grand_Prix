@@ -24,17 +24,21 @@ prompt patterns are in [AGENT_GUIDE.md](AGENT_GUIDE.md).
   `student/controller.m`, `student/robotConfig.m` and `student/engineering_log.md` (what they've decided so far).
 - **Only edit files in `student/`.** Never modify `simulator/`, `tracks/`, `garage.m`, `practiceRace.m`, `plotLap.m` or
   `submitCar.m`. In `student/engineering_log.md`, fill in only the 📏 measured fields, and only when the student asks.
+- **The best model is the student's.** `practiceRace('Path', 'all')` saves a run with a better overall score as
+  `best_model/<team>.zip` (one model only; it is what they hand in), and shows it as a grey ghost car. Never edit,
+  delete, copy or restore anything in `best_model/` unless the student asks. When a run becomes a new best, say so.
 - **Car design rules.** Never exceed the 80-credit budget. Change `student/carDesign.m` only after the student has chosen
   the design. Use the `car-design-review` skill.
 - **One change at a time, then run it.** Only changes the student approved. After every change, run through the `matlab`
   MCP server and report time, penalties, energy and the result on each path:
   ```matlab
-  r = practiceRace('Path', 'all', 'Quiet', true); for i = 1:numel(r), fprintf('%-18s fin=%d total=%.2f pen=%d E=%.1fWh bench=%.2f score=%.1f %s\n', r(i).pathName, r(i).finished, r(i).totalTime, r(i).penalty, r(i).energyUsedWh, r(i).benchmark, r(i).score, r(i).dnfReason); end; fprintf('overall=%.1f\n', r(1).overall);
+  r = practiceRace('Path', 'all', 'Quiet', true); for i = 1:numel(r), fprintf('%-18s fin=%d total=%.2f pen=%d E=%.1fWh bench=%.2f score=%.1f %s\n', r(i).pathName, r(i).finished, r(i).totalTime, r(i).penalty, r(i).energyUsedWh, r(i).benchmark, r(i).score, r(i).dnfReason); end; fprintf('overall=%.1f  best before=%.1f  new best saved=%d\n', r(1).overall, r(1).bestBefore, r(1).newBest);
   ```
   Then ask whether to keep the change or undo it.
 - **Diagnose from data, not guesses:** use the `race-debrief` skill (it reads grip use, battery and checkpoints).
 - **Use the physics.** Speeds in corners come from equation 6 (`cornerSpeed(obs.car, kappa)`); braking and turning share
-  one grip budget (eq. 5); energy is eq. 8. Explain changes in those terms.
+  one grip budget (eq. 5); energy is eq. 8. Wet and mud points are flagged ahead (`obs.previewPoints(:,4)`: grip x 0.6;
+  `(:,5)`: mud, rolling resistance x 4). Explain changes in those terms.
 - **No track-specific hacks.** The final paths are new layouts. Never hard-code coordinates, corner positions, lap
   distances or path-specific timings. Use `obs.path`, `obs.previewPoints` and `obs.car`.
 - The MATLAB server starts MATLAB on first use; that can take a minute.

@@ -72,7 +72,7 @@ Read AGENTS.md, README.md, PHYSICS.md, everything in student/ (including
 engineering_log.md), and run garage.
 
 Then tell me, in 5 bullet points:
-- what the three paths test and how they're scored
+- what the four paths test and how they're scored
 - what my controller receives and what it must return
 - which files you may and may not change
 - what I have decided so far (from my log)
@@ -166,7 +166,7 @@ the change log.
 ### ⚡ Pattern 6: Improve speed (once every path finishes cleanly)
 
 ```
-Every path finishes. Current times: [drag, technical, endurance].
+Every path finishes. Current times: [drag, technical, endurance, mud].
 Goal: faster on [path]. Keep: no new penalties on any path.
 
 I think the car is slowest where [section], because [reason].
@@ -211,7 +211,8 @@ Then list anything in the controller that could fail on a new layout
 (edge cases, assumptions). Don't change anything.
 ```
 
-**You decide:** is it ready? Then run `submitCar` yourself. You can resubmit until the freeze.
+**You decide:** is it ready? `bestModel` shows the model you will hand in (your best overall, not necessarily
+the files you have now). Then run `submitCar` yourself. You can resubmit until the freeze.
 
 ---
 
@@ -272,6 +273,8 @@ MCP server (`garage`, `practiceRace`, `plotLap`, any MATLAB command), then read 
 skills for this project: `car-design-review` and `race-debrief`.
 
 It cannot (and must not) modify `simulator/` or `tracks/`, see the final paths, or change the vehicle physics.
+It must not touch `best_model/`: your best model is saved by `practiceRace('Path', 'all')` when you beat it, and only you
+decide what to hand in.
 
 When it goes off the rails, the **Taking back control** prompts in [README.md](README.md) bring it back.
 

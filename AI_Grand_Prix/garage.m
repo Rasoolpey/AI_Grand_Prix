@@ -44,7 +44,7 @@ function g = garage(varargin)
     g.t0to10 = timeTo(car, 10);
     g.corner10 = cornerSpeed(car, 1/10);
     g.corner40 = cornerSpeed(car, 1/40);
-    names = ["drag", "technical", "endurance"];
+    names = ["drag", "technical", "endurance", "mud"];
     for i = 1:numel(names)
         b = benchmarkTime(car, loadPath(names(i)));
         g.estimate.(names(i)) = struct('time', b.time, 'energyWh', b.energyWh, 'capped', b.capped, 'feasible', b.feasible);
@@ -153,9 +153,9 @@ function drawGarage(g, car, cat)
     for i = 1:size(lines, 1)
         txt(as, 0.03, y, lines{i, 1}, 'FontSize', 10);
         if ~isempty(lines{i, 2}), txt(as, 0.03, y - 0.03, lines{i, 2}, 'FontSize', 8, 'Color', [0.65 0.8 1]); end
-        y = y - 0.062;
+        y = y - 0.058;
     end
-    for nm = ["drag", "technical", "endurance"]
+    for nm = ["drag", "technical", "endurance", "mud"]
         e = g.estimate.(nm);
         extra = '';  if e.capped, extra = '  energy-limited'; end
         txt(as, 0.06, y, sprintf('%-10s %6.1f s   %5.1f Wh%s', nm, e.time, e.energyWh, extra), 'FontSize', 10, 'FontName', 'Consolas');

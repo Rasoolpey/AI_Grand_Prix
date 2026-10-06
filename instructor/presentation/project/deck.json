@@ -10,7 +10,7 @@
     "p1-divider", "p1-topics", "p1-pool", "p1-draw", "p1-workspace", "p1-pipeline", "p1-step1", "p1-step2", "p1-step3", "p1-step4", "p1-step5", "p1-step6", "p1-rules", "p1-outputs",
     "break",
     "p2-divider", "p2-mission", "p2-car", "p2-model", "p2-model-push", "p2-model-grip", "p2-model-energy",
-    "p2-paths", "p2-matrix", "p2-tradeoffs", "p2-scoring", "p2-sweetspot",
+    "p2-paths", "p2-matrix", "p2-tradeoffs", "p2-scoring", "p2-sweetspot", "p2-best",
     "p2-roles", "p2-loop", "p2-steps", "p2-step1", "p2-step2", "p2-step3", "p2-step4", "p2-step5", "p2-step6", "p2-control", "p2-raceday",
     "wrap", "open-decisions"
   ],
@@ -20,7 +20,7 @@
     "s-setup": { "description": "One command sets up everything in one clean folder.", "start": "setup" },
     "s-p1":    { "description": "Part 1: from a research topic to a literature review and a proposal with an AI agent.", "start": "p1-divider" },
     "s-break": { "description": "Break.", "start": "break" },
-    "s-p2":    { "description": "Part 2: the AI Grand Prix. The car and its model, the paths, the trade-offs, then six steps to race day.", "start": "p2-divider" },
+    "s-p2":    { "description": "Part 2: the AI Grand Prix. The car and its model, four paths, the trade-offs, your best model, then six steps to race day.", "start": "p2-divider" },
     "s-close": { "description": "What students leave with, and the decisions still open.", "start": "wrap" }
   },
   "faces": {

@@ -8,7 +8,7 @@ function course = buildPath(pieces, varargin)
 %   course = buildPath(pieces, Name, Value, ...)
 %
 %   pieces   row vector of road.straight / road.corner / road.chicane /
-%            road.surface pieces, in driving order
+%            road.surface / road.mud pieces, in driving order
 %
 %   Options:
 %     'Name'          display name                          ("Path")
@@ -115,6 +115,7 @@ function course = buildPath(pieces, varargin)
     d.grade     = g.grade(idx);
     d.z         = z(idx);
     d.muFactor  = g.mu(idx);
+    d.rollFactor = g.roll(idx);
     d.length    = g.s(end);                       % lap length (circuit) or total length (open)
 
     % ---- Finish, stop box, checkpoints --------------------------------- %
@@ -174,16 +175,17 @@ function g = integrate(pieces, opt, isCircuit)
     y = opt.Start(2) + cumtrapz(s, sin(theta));
 
     % surface markers: placed at the start of the next geometric piece
-    mu = ones(n + 1, 1);
+    mu = ones(n + 1, 1);  roll = ones(n + 1, 1);
     geoBefore = cumsum(~isMarker);
     for i = find(isMarker)
         s0 = edges(min(geoBefore(i) + 1, numel(edges)));
         on = s >= s0 & s < s0 + pieces(i).length;
         mu(on) = min(mu(on), pieces(i).muFactor);
+        if isfield(pieces, 'rollFactor'), roll(on) = max(roll(on), pieces(i).rollFactor); end
     end
 
     g = struct('s', s, 'x', x, 'y', y, 'theta', theta, 'kappa', kappa, 'grade', grade, ...
-               'z', z, 'mu', mu, 'pieceStart', edges(1:end-1));
+               'z', z, 'mu', mu, 'roll', roll, 'pieceStart', edges(1:end-1));
 end
 
 function v = smoothVal(s, edges, vals, isCircuit, l)

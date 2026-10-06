@@ -28,21 +28,21 @@ The choice and the written trade-off are theirs.
    A = base;                                   % current car
    B = base; B.tyres = "soft";                 % the student's candidate B
    C = base; C.motor = "5.5kW";                % the student's candidate C (or delete this line)
-   paths = ["drag", "technical", "endurance"];
+   paths = ["drag", "technical", "endurance", "mud"];
    for d = {A, B, C}
        [~, g] = evalc('garage(d{1}, ''Plot'', false)');            % evalc: keep the spec sheet out of the reply
        s = arrayfun(@(p) min(120, 100 * practiceReference(p) / g.estimate.(p).time), paths);
        [~, w] = min(s);
-       fprintf('%-6s %-5s %-6s %-9s %-6s cost %3d%s mass %3.0f | 0-10 %.2fs R10 %.1f R40 %.1f | est %.2f / %.2f / %.2f s, E %.0f/%d Wh%s | s %.0f / %.0f / %.0f  overall %.1f  weakest %s\n', ...
+       fprintf('%-6s %-5s %-6s %-9s %-6s cost %3d%s mass %3.0f | 0-10 %.2fs R10 %.1f R40 %.1f | est %.2f / %.2f / %.2f / %.2f s, E %.0f/%d Wh%s | s %.0f / %.0f / %.0f / %.0f  overall %.1f  weakest %s\n', ...
            g.car.parts.motor, g.car.parts.battery, g.car.parts.tyres, g.car.parts.aero, g.car.parts.gearing, g.cost, ...
            repmat('!', 1, g.overBudget), g.mass, g.t0to10, g.corner10, g.corner40, ...
-           g.estimate.drag.time, g.estimate.technical.time, g.estimate.endurance.time, ...
+           g.estimate.drag.time, g.estimate.technical.time, g.estimate.endurance.time, g.estimate.mud.time, ...
            g.estimate.endurance.energyWh, g.car.batteryWh, repmat(' (capped)', 1, g.estimate.endurance.capped), ...
            s, 0.6 * mean(s) + 0.4 * min(s), paths(w));
    end
    ```
    `!` after the cost means over budget (that car cannot race). `(capped)` means the estimate had to save energy on the
-   endurance. Scores use the same rule as race day: s = min(120, 100 × T_ref / T), overall = 0.6 × mean + 0.4 × min.
+   endurance. Path order: drag, technical, endurance, mud. Scores use the same rule as race day: s = min(120, 100 × T_ref / T), overall = 0.6 × mean + 0.4 × min.
 
 4. **Report, briefly:**
    - **One table:** each candidate's parts, cost, mass, estimated time per path, endurance energy, path scores, overall
@@ -64,4 +64,5 @@ The choice and the written trade-off are theirs.
 
 6. **Build it.** The student edits `student/carDesign.m` or tells you to. Then run `garage` and
    `practiceRace('Path', 'all')` and compare with the estimates. If the real result is far from the estimate, say why
-   (usually the controller) and ask whether to start the `race-debrief` skill.
+   (usually the controller) and ask whether to start the `race-debrief` skill. If the overall beat their best, the run
+   was saved as their best model: tell them. If not, their best model is unchanged.

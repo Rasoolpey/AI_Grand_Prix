@@ -64,6 +64,8 @@ lapPlot.png
 .agents/mcp_config.json
 .agents/mcp_config.json.bak
 
-# Local submission zips (submitCar) and the per-event shared-folder setting
+# Each student's best model (practiceRace 'all'), old local submission zips,
+# and the per-event shared-folder setting
+best_model/
 submission/
 submitFolder.txt

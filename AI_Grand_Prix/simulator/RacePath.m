@@ -7,11 +7,12 @@ classdef RacePath
 %
 %   Built by buildPath from road pieces.  Points along the centreline are
 %   ~0.5 m apart and each carries its distance s, heading, curvature,
-%   grade (%), elevation z and grip factor (muFactor, < 1 on a wet patch).
+%   grade (%), elevation z, grip factor (muFactor, < 1 on wet or mud) and
+%   rolling-resistance factor (rollFactor, > 1 on mud).
 %
 %   Key methods:
 %     [idx, crossErr, sProj] = course.locate(x, y, hintIdx)
-%     pts = course.preview(idx, n)        n x 4: [x y grade wet], ~1 m apart
+%     pts = course.preview(idx, n)        n x 5: [x y grade slippery mud], ~1 m apart
 %     r   = course.roadAt(idx)            alpha (rad) and muFactor at a point
 %     course.checkpointLine(k) / course.finishLine()   [x1 y1 x2 y2]
 %
@@ -30,7 +31,8 @@ classdef RacePath
         kappa       (:,1) double         % curvature 1/m (+ = left)
         grade       (:,1) double         % % (uphill +)
         z           (:,1) double         % elevation (m)
-        muFactor    (:,1) double         % 1 dry, < 1 wet
+        muFactor    (:,1) double         % 1 dry, < 1 wet or mud
+        rollFactor  (:,1) double         % 1 normal, > 1 mud (multiplies C_rr)
         normals     (:,2) double         % unit, pointing left
         leftBoundary  (:,2) double
         rightBoundary (:,2) double
@@ -52,6 +54,7 @@ classdef RacePath
             obj.leftBoundary  = obj.centreline + hw * obj.normals;
             obj.rightBoundary = obj.centreline - hw * obj.normals;
             obj.ds = mean(diff(obj.s));
+            if isempty(obj.rollFactor), obj.rollFactor = ones(size(obj.s)); end
             obj.checkpointIdx = obj.indexAt(obj.checkpointS);
             obj.finishIdx = obj.indexAt(obj.finishS);
         end
@@ -106,7 +109,8 @@ classdef RacePath
 
         function pts = preview(obj, idx, n)
         % PREVIEW  The next n centreline points, ~1 m apart, starting ~1 m
-        % ahead of idx.  Columns: x, y, grade (%), wet (1 on a wet patch).
+        % ahead of idx.  Columns: x, y, grade (%), slippery (1 on a wet
+        % patch or mud: less grip), mud (1 on mud: more rolling resistance).
         % On an open path the list stops at the end of the road.
             step = max(1, round(1 / obj.ds));
             ii = idx + (1:n)' * step;
@@ -115,7 +119,7 @@ classdef RacePath
             else
                 ii = ii(ii <= obj.numPoints());
             end
-            pts = [obj.centreline(ii,:), obj.grade(ii), double(obj.muFactor(ii) < 1)];
+            pts = [obj.centreline(ii,:), obj.grade(ii), double(obj.muFactor(ii) < 1), double(obj.rollFactor(ii) > 1)];
         end
 
         function obj = withTimeLimit(obj, t)
@@ -124,8 +128,9 @@ classdef RacePath
         end
 
         function r = roadAt(obj, idx)
-            r.alpha    = atan(obj.grade(idx) / 100);
-            r.muFactor = obj.muFactor(idx);
+            r.alpha      = atan(obj.grade(idx) / 100);
+            r.muFactor   = obj.muFactor(idx);
+            r.rollFactor = obj.rollFactor(idx);
         end
 
         function L = checkpointLine(obj, k)
@@ -157,10 +162,15 @@ classdef RacePath
             surface(ax, X, Y, Z, C, 'EdgeColor', 'none', 'FaceColor', 'interp', 'HandleVisibility', 'off');
             plot(ax, L(:,1), L(:,2), 'w-', 'LineWidth', 1, 'HandleVisibility', 'off');
             plot(ax, R(:,1), R(:,2), 'w-', 'LineWidth', 1, 'HandleVisibility', 'off');
-            wet = obj.muFactor < 1;
+            mud = obj.rollFactor > 1;
+            wet = obj.muFactor < 1 & ~mud;
             if any(wet)
                 plot(ax, obj.centreline(wet,1), obj.centreline(wet,2), '.', 'Color', [0.3 0.6 1], ...
                     'MarkerSize', 10, 'HandleVisibility', 'off');
+            end
+            if any(mud)
+                plot(ax, obj.centreline(mud,1), obj.centreline(mud,2), '.', 'Color', [0.65 0.45 0.25], ...
+                    'MarkerSize', 12, 'HandleVisibility', 'off');
             end
             F = obj.finishLine();
             plot(ax, F([1 3]), F([2 4]), 'g-', 'LineWidth', 3, 'HandleVisibility', 'off');

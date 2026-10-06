@@ -11,7 +11,8 @@ function results = RaceSimulation(course, car, controllerFn, config, options)
 %   car           struct from buildCar(carDesign())
 %   controllerFn  @(obs, config) -> command with .throttle and .steering in [-1, 1]
 %   config        passed to the controller every step
-%   options       .headless (default true), .dt (default 0.02)
+%   options       .headless (default true), .dt (default 0.02),
+%                 .ghost (live view only: a previous run's log to show as a ghost car)
 %
 %   Rules (identical for every car):
 %     Circuit: pass every checkpoint in order, then cross the finish line
@@ -64,7 +65,7 @@ function results = RaceSimulation(course, car, controllerFn, config, options)
     lg = preallocLog(maxSteps);
 
     if ~headless
-        viz = Visualizer(course, car);
+        viz = Visualizer(course, car, getOpt(options, 'ghost', []));
     end
 
     step = 0;
@@ -177,7 +178,7 @@ function results = RaceSimulation(course, car, controllerFn, config, options)
         lg.Fx(step) = info.Fx;        lg.Fy(step) = info.Fy;      lg.G(step) = info.G;
         lg.gripUse(step) = info.gripUse;  lg.understeer(step) = info.understeer;
         lg.energyJ(step) = s.energyJ; lg.grade(step) = course.grade(idx);
-        lg.muFactor(step) = course.muFactor(idx);
+        lg.muFactor(step) = course.muFactor(idx);  lg.rollFactor(step) = course.rollFactor(idx);
         lg.crossTrackErr(step) = crossErr;  lg.offTrack(step) = off;
         lg.idx(step) = idx;           lg.progress(step) = progress();
         lg.lap(step) = lap;           lg.checkpoint(step) = nextCp;
@@ -272,7 +273,7 @@ function lg = preallocLog(n)
     z = zeros(n, 1);
     lg = struct('t', z, 'x', z, 'y', z, 'z', z, 'theta', z, 'v', z, 'throttle', z, ...
         'steering', z, 'steeringAngle', z, 'Fx', z, 'Fy', z, 'G', z, 'gripUse', z, ...
-        'understeer', false(n, 1), 'energyJ', z, 'grade', z, 'muFactor', z, ...
+        'understeer', false(n, 1), 'energyJ', z, 'grade', z, 'muFactor', z, 'rollFactor', z, ...
         'crossTrackErr', z, 'offTrack', false(n, 1), 'idx', z, 'progress', z, ...
         'lap', z, 'checkpoint', z, 'curvature', z);
 end

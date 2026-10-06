@@ -76,23 +76,25 @@ your rules override the defaults.
 
 **Open the folder:** in VS Code, `Documents\AI_Grand_Prix-main\AI_Grand_Prix` (or **AI Workshop – Part 2 Grand Prix**). The Antigravity panel's MCP servers list shows the same 4 servers as in Part 1.
 
-You build a small electric race car from five parts (budget 80 credits), write the code that drives it, and race it, first
-on practice paths, then on race day on layouts you have never seen. No car is best everywhere: a part that helps on one
-path costs you on another, so your job is to find the **sweet spot** and explain it with data.
+You build a small electric race car from five parts (budget 80 credits), write the code that drives it, and race it on
+four paths (drag strip, technical circuit, endurance, muddy road), first in practice, then on race day on layouts you have
+never seen. No car is best everywhere: a part that helps on one path costs you on another, so your job is to find the
+**sweet spot** and explain it with data. Every time your overall score beats your best, your **best model** is saved
+automatically (and shown as a ghost car next time). That one model is what races on the projector at the end.
 
 **This time you are the race engineer and the agent is your pit crew.** It runs MATLAB, reads the telemetry and writes
 code fast, but every decision is yours: which parts, which driving strategy, which change to try, whether to keep it. Before
 each decision you write down what you **predict**, and afterwards whether you were right, in **`student\engineering_log.md`**.
-That log is handed in with your car.
+That log is handed in with your best model.
 
 | Step | You do, or type to the agent | You decide (in the log) |
 |---|---|---|
-| 1 | *(you)* In MATLAB, run `garage`, `practiceRace` and `practiceRace('Path', 'all')`. Watch your car drive | Your weakest path, and why |
+| 1 | *(you)* Write your team name in `student\carDesign.m`. In MATLAB, run `garage`, `practiceRace` and `practiceRace('Path', 'all')`. Watch your car drive | Your weakest path, and why |
 | 2 | `Read AGENTS.md and the project, then tell me in 5 bullet points what you understood. Don't change anything.` | Is its summary right? |
 | 3 | Write 1–2 candidate designs and your prediction in the log, then `Run the car-design-review skill on the candidates in my engineering log.` | The design you race, and your trade-off in your own words |
 | 4 | `Propose three ways my controller could choose its target speed. Don't implement anything.` | Your driving strategy |
-| 5 | `Run the race-debrief skill on the technical path.` (repeat) | What limits the car; approve each change, keep it or undo it |
-| 6 | The overfitting check (Pattern 7 in `AGENT_GUIDE.md`), then `submitCar` | Is it ready for new layouts? |
+| 5 | `Run the race-debrief skill on the technical path.` (repeat). After each change: `practiceRace('Path', 'all')`, racing your best model's ghost | What limits the car; approve each change, keep it or undo it |
+| 6 | The overfitting check (Pattern 7 in `AGENT_GUIDE.md`), then `bestModel` and `submitCar` (hands in your best model) | Is it ready for new layouts? |
 
 The full steps, rules, parts and scoring are in `AI_Grand_Prix\README.md`. The equations are in `AI_Grand_Prix\PHYSICS.md`.
 How to talk to your agent is in `AI_Grand_Prix\AGENT_GUIDE.md`.
@@ -161,9 +163,11 @@ No admin rights, Docker, Git or Python are needed. The installer adds the Google
    ```
    Run testMCP, then garage, then practiceRace('Path', 'all') through MATLAB and report the results.
    ```
-   Expected: every check `[OK]`; the baseline finishes all three paths with no penalties
-   (about 22 s drag strip, 54 s technical, 278 s endurance; overall ≈ 48).
+   Expected: every check `[OK]`; the baseline finishes all four paths with no penalties
+   (about 22 s drag strip, 54 s technical, 278 s endurance, 64 s muddy road; overall ≈ 48), and the first run is saved
+   as the best model (`bestModel` shows it).
 5. **Graphics in MATLAB itself** (from `AI_Grand_Prix-main\AI_Grand_Prix`): `garage`, `practiceRace` (animated race view with HUD),
+   `practiceRace('Path', 'all')` (the fast replay of all four paths with the best-model ghost),
    `r = practiceRace('Path', 'endurance', 'Headless', true); plotLap(r)`.
 6. **Agent loop:** `Run the race-debrief skill on the technical path.` It should run the race, write `lapPlot.png`, ask what
    you think limits the car, and only then give its own diagnosis and propose one change, without editing anything until

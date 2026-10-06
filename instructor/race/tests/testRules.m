@@ -12,7 +12,7 @@ function setupOnce(tc)
 end
 
 function testReferenceFinishesAllPaths(tc)
-    for nm = ["drag", "technical", "endurance", "wet"]
+    for nm = ["drag", "technical", "endurance", "mud", "wet"]
         clear refController
         r = RaceSimulation(loadPath(nm), tc.TestData.car, @refController, struct());
         tc.verifyTrue(r.finished, nm + ": " + r.dnfReason);

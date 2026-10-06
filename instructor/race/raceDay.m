@@ -1,18 +1,21 @@
 function raceDay(varargin)
-% RACEDAY  Broadcast the recorded qualifying runs on the projector (D8).
+% RACEDAY  Show the races on the projector: every car on track at once (D8).
 %
 %   raceDay                          every final path, then the standings
 %   raceDay('Paths', 2)              only the second final path
 %   raceDay('Static', true)          fallback: standings and path tables only
 %   raceDay('SaveFrames', folder)    no animation: save still frames (rehearsal / checks)
 %
-%   Every car was simulated on its own (qualify); the broadcast replays all
-%   runs together, synchronised by time, labelled as a RECORDED BROADCAST.
-%   Cars do not interact.  The endurance path plays at 2x speed.
+%   Plays the runs in <Out>/runs.mat (written by finalRace or qualify): all
+%   cars together, synchronised by race time, with a live running order.
+%   Ghost cars: they do not touch.  Each race opens with a 3-2-1 countdown
+%   and is paced to last about 'Seconds' on screen (the reference car's
+%   time); cars still running after twice that are fast-forwarded.
 %   Between scenes the view waits for a key press ('Pause', false: 4 s).
 %
-%   Options: 'Out' results folder (results/), 'Speed' playback multiplier
-%   (default 1; 2 for multi-lap paths), 'Pause' (true).
+%   Options: 'Out' results folder (results/), 'Seconds' on-screen length of
+%   a race (12), 'Speed' fixed playback multiplier instead (default: from
+%   'Seconds'), 'Pause' (true).
 %
 %   See also: qualify, standings, Visualizer
 
@@ -22,6 +25,7 @@ function raceDay(varargin)
     o.addParameter('Paths', []);
     o.addParameter('Static', false);
     o.addParameter('Speed', []);
+    o.addParameter('Seconds', 12);
     o.addParameter('Pause', true);
     o.addParameter('SaveFrames', "");
     o.parse(varargin{:});
@@ -32,9 +36,10 @@ function raceDay(varargin)
     paths = opt.Paths;  if isempty(paths), paths = 1:numel(F.ids); end
 
     if ~opt.Static
-        for k = paths
+        for p = 1:numel(paths)
+            k = paths(p);
             runs = R(string({R.pathId}) == F.ids(k));
-            broadcast(F.courses{k}, runs, F.tref(k), opt, k);
+            broadcast(F.courses{k}, runs, F.tref(k), opt, k, sprintf('Race %d of %d', p, numel(paths)));
             pathBoard(runs, F, k, opt);
         end
     else
@@ -47,14 +52,14 @@ function raceDay(varargin)
 end
 
 % ======================================================================= %
-function broadcast(course, runs, tref, opt, k)
+function broadcast(course, runs, tref, opt, k, raceLabel)
     fig = figure('Name', "AI Grand Prix - " + course.name, 'Color', [0.08 0.08 0.1], 'NumberTitle', 'off', ...
         'Position', [20 40 1500 860], 'MenuBar', 'none', 'ToolBar', 'none');
     ax = axes(fig, 'Position', [0.01 0.06 0.72 0.88]);
     Visualizer.drawCourse(ax, course);
-    title(ax, course.name, 'Color', 'w', 'FontSize', 18);
+    title(ax, raceLabel + "  -  " + course.name, 'Color', 'w', 'FontSize', 20);
     annotation(fig, 'textbox', [0.01 0.005 0.72 0.05], 'String', ...
-        'RECORDED BROADCAST - every car was simulated on its own; cars do not interact', ...
+        'Every car is driven by its own model, simulated on this computer with the same physics  -  ghost cars: they do not touch', ...
         'Color', [1 0.85 0.3], 'FontSize', 12, 'FontWeight', 'bold', 'EdgeColor', 'none', 'HorizontalAlignment', 'center');
     tower = axes(fig, 'Position', [0.75 0.06 0.24 0.88], 'Color', [0.12 0.12 0.15], 'XColor', 'none', ...
         'YColor', 'none', 'XLim', [0 1], 'YLim', [0 1]);
@@ -63,17 +68,30 @@ function broadcast(course, runs, tref, opt, k)
 
     n = numel(runs);
     rowH = min(0.055, 0.9 / max(n, 1));  rowFont = max(7, min(11, round(11 * rowH / 0.055 + 1)));
-    g = cell(n, 1);  lbl = gobjects(n, 1);  rows = gobjects(n, 1);
+    g = cell(n, 1);  lbl = gobjects(n, 1);  rows = gobjects(n, 1);  dots = gobjects(n, 1);
     for i = 1:n
         aero = "none";  if isfield(runs(i).parts, 'aero'), aero = string(runs(i).parts.aero); end
         g{i} = Visualizer.makeCar(ax, runs(i).colour, aero);
-        lbl(i) = text(ax, NaN, NaN, " " + runs(i).teamName, 'Color', 'w', 'FontSize', 8, 'FontWeight', 'bold');
+        dots(i) = plot(ax, NaN, NaN, 'o', 'MarkerSize', 11, 'MarkerFaceColor', runs(i).colour, ...
+            'MarkerEdgeColor', 'w', 'LineWidth', 1.2);
+        lbl(i) = text(ax, NaN, NaN, " " + runs(i).teamName, 'Color', 'w', 'FontSize', 10, 'FontWeight', 'bold', ...
+            'Interpreter', 'none');
         rows(i) = text(tower, 0.05, 0.9 - rowH * (i - 1), '', 'Color', 'w', 'FontSize', rowFont, 'FontName', 'Consolas', ...
             'Interpreter', 'none');
     end
     tEnd = max(arrayfun(@(r) max([r.log.t(:); 0]), runs));
     tEnd = min(tEnd, course.timeLimit);
-    speed = opt.Speed;  if isempty(speed), speed = 1 + (course.laps > 1); end
+    speed = opt.Speed;
+    if isempty(speed)                                   % pace: the reference car takes 'Seconds' on screen
+        base = tref;
+        if ~isfinite(base) || base <= 0
+            fin = [runs.finished];  base = median([runs(fin).time]);
+            if isempty(base) || ~isfinite(base), base = tEnd; end
+        end
+        speed = max(base, 1) / opt.Seconds;
+    end
+    wCap = 2 * opt.Seconds;                             % after this, fast-forward the cars still running
+    toRace = @(w) w * speed + max(w - wCap, 0) * (max(tEnd - wCap * speed, 0) / 2 - speed);
 
     if opt.SaveFrames ~= ""
         if ~exist(opt.SaveFrames, 'dir'), mkdir(opt.SaveFrames); end
@@ -84,9 +102,11 @@ function broadcast(course, runs, tref, opt, k)
         close(fig);
         return;
     end
+    drawAt(0);
+    countdown(ax, course);
     t0 = tic;
     while isvalid(fig)
-        t = toc(t0) * speed;
+        t = toRace(toc(t0));
         drawAt(min(t, tEnd));
         drawnow;
         if t >= tEnd, break; end
@@ -101,7 +121,8 @@ function broadcast(course, runs, tref, opt, k)
             if isempty(lg.t), status(j) = "DNF"; continue; end
             m = max(1, min(numel(lg.t), floor(t / 0.02)));
             Visualizer.placeCar(g{j}, double(lg.x(m)), double(lg.y(m)), double(lg.theta(m)));
-            set(lbl(j), 'Position', [double(lg.x(m)) + 1.5, double(lg.y(m)) + 1.5, 0]);
+            set(dots(j), 'XData', double(lg.x(m)), 'YData', double(lg.y(m)));
+            set(lbl(j), 'Position', [double(lg.x(m)) + 2.5, double(lg.y(m)) + 2.5, 0]);
             prog(j) = double(lg.progress(m));
             if runs(j).finished && t >= runs(j).time
                 status(j) = sprintf('%7.2f s', runs(j).totalTime);
@@ -122,6 +143,18 @@ function broadcast(course, runs, tref, opt, k)
         end
         set(clockTxt, 'String', sprintf('%6.1f s   ref %.1f s', t, tref));
     end
+end
+
+function countdown(ax, course)
+% Starting lights: 3, 2, 1, GO.
+    c = mean(course.centreline, 1);
+    h = text(ax, c(1), c(2), '', 'Color', [1 0.85 0.3], 'FontSize', 90, 'FontWeight', 'bold', ...
+        'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle');
+    for s = ["3", "2", "1", "GO!"]
+        if ~isvalid(h), return; end
+        set(h, 'String', s);  drawnow;  pause(0.7);
+    end
+    if isvalid(h), delete(h); end
 end
 
 function pathBoard(runs, F, k, opt)
@@ -156,7 +189,7 @@ function finalBoard(S, F, opt)
     [i, k] = ind2sub(size(sc), where);
     lines = [lines newline newline sprintf('Overall champion: %s', S.teamName(1)) newline ...
         sprintf('Best single path: %s on %s (%.1f)', S.teamName(i), F.ids(k), best) newline ...
-        'Best engineering explanation / Best use of the agent: judged (TODO_RACE 9.4)'];
+        'Best engineering explanation / Best use of the agent: judged from the engineering logs'];
     fprintf('\nOVERALL STANDINGS  (overall = 0.6 x mean + 0.4 x min)\n%s\n', lines);
     board('Overall standings   (0.6 x mean + 0.4 x min of the path scores)', lines, opt, 'standings');
 end

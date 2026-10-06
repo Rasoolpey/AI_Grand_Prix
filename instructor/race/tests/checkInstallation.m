@@ -27,7 +27,7 @@ function report = checkInstallation()
     report.testsPassed = sum([tests.Passed]);
     report.testsTotal = numel(tests);
 
-    races = practiceRace('Path', 'all', 'Headless', true, 'Quiet', true);
+    races = practiceRace('Path', 'all', 'Headless', true, 'Quiet', true, 'SaveBest', false);
     assert(all([races.finished]), 'checkInstallation:baseline', 'A baseline race did not finish.');
     report.baseline = struct('path', {}, 'time', {}, 'penalty', {}, 'energyWh', {});
     for k = 1:numel(races)

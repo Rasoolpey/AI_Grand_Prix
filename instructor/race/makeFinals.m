@@ -27,7 +27,7 @@ function F = makeFinals(seed, varargin)
     addpath(finals);
     T = finalTemplates();
 
-    target = struct('drag', [8 16], 'technical', [25 75], 'endurance', [90 190]);
+    target = struct('drag', [8 16], 'technical', [25 75], 'endurance', [90 190], 'mud', [25 75]);
     refDesign = struct('team', "Reference");
     cat = parts();
     for q = cat.partNames, refDesign.(q) = cat.(q)(2).id; end

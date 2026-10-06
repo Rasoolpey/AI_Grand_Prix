@@ -45,6 +45,24 @@ function testDownforceHelpsOnlyAtSpeed(tc)
     tc.verifyEqual(cornerSpeed(c, 0), Inf);
 end
 
+function testMudIsSlipperyAndSticky(tc)
+    % mud: grip x 0.6 (eq. 6 with muFactor) and rolling resistance x 4 (eq. 4)
+    car = tc.TestData.car;
+    tc.verifyEqual(cornerSpeed(car, 1/10, 0, 0.6), cornerSpeed(setfield(car, 'mu', 0.6 * car.mu), 1/10), 'RelTol', 1e-12); %#ok<SFLD>
+    [~, Froll] = roadForces(car, 5, 0);
+    [~, FrollMud] = roadForces(car, 5, 0, 4);
+    tc.verifyEqual(FrollMud, 4 * Froll, 'RelTol', 1e-12);
+    s = state0(car);  s.v = 8;
+    dry = stepCar(car, s, 0, 0, struct('alpha', 0, 'muFactor', 1), 0.02);
+    mud = stepCar(car, s, 0, 0, struct('alpha', 0, 'muFactor', 0.6, 'rollFactor', 4), 0.02);
+    tc.verifyLessThan(mud.v, dry.v);                      % coasting: mud slows the car more
+    c = loadPath("mud");
+    P = c.preview(find(c.rollFactor > 1, 1) - 20, 60);   % 10 m before the first mud
+    tc.verifySize(P, [60 5]);
+    tc.verifyTrue(any(P(:,5) == 1) && all(P(P(:,5) == 1, 4) == 1));   % mud points are also flagged slippery
+    tc.verifyTrue(all(c.rollFactor(c.rollFactor > 1) == 4) && all(c.muFactor(c.rollFactor > 1) == 0.6));
+end
+
 function testEmptyBatteryCoasts(tc)
     car = tc.TestData.car;  s = state0(car);  s.v = 10;  s.energyJ = 0;
     road = struct('alpha', 0, 'muFactor', 1);
@@ -94,7 +112,7 @@ function testSlopeForce(tc)
 end
 
 function testCircuitsReturnToStartHeight(tc)
-    for nm = ["technical", "endurance", "wet"]
+    for nm = ["technical", "endurance", "mud", "wet"]
         c = loadPath(nm);
         tc.verifyLessThan(abs(c.z(end) - c.z(1)), 0.05, nm);
         tc.verifyLessThan(norm(c.centreline(end,:) - c.centreline(1,:)), 0.6, nm);

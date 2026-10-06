@@ -10,7 +10,7 @@ function b = benchmarkTime(car, course, varargin)
 %
 %   A quasi-steady speed profile along the PRESCRIBED CENTRELINE, built from
 %   the same physics functions as the simulator (eqs. 1-9):
-%     1. corner limit at every point from eq. 6 (grade, downforce, wet), and v_gear
+%     1. corner limit at every point from eq. 6 (grade, downforce, wet, mud), and v_gear
 %     2. forward pass: accelerate as hard as power, gearing and the combined
 %        grip budget allow, from a standing start
 %     3. backward pass: brake as late as the combined grip allows (on a drag
@@ -57,6 +57,7 @@ function b = benchmarkTime(car, course, varargin)
     kap   = course.kappa(ii);
     alpha = atan(course.grade(ii) / 100);
     mu    = course.muFactor(ii);
+    rf    = course.rollFactor(ii);
     vLim0 = min(cornerSpeed(car, kap, alpha, mu), car.vGear);
 
     p = profile(vLim0);
@@ -101,7 +102,7 @@ function b = benchmarkTime(car, course, varargin)
             G  = gripLimit(car, v, alpha(k), mu(k));
             Fy = m * v^2 * abs(kap(k));
             Fd = min(driveForce(car, v, 1), sqrt(max(G^2 - Fy^2, 0)));
-            [Fdrag, Froll, Fgrade] = roadForces(car, v, alpha(k));
+            [Fdrag, Froll, Fgrade] = roadForces(car, v, alpha(k), rf(k));
             a  = (Fd - Fdrag - Froll - Fgrade) / m;
             vf(k+1) = min(sqrt(max(v^2 + 2 * a * ds, 0.01)), vLim(k+1));
         end
@@ -113,7 +114,7 @@ function b = benchmarkTime(car, course, varargin)
             G  = gripLimit(car, v, alpha(k+1), mu(k+1));
             Fy = m * v^2 * abs(kap(k+1));
             Fb = sqrt(max(G^2 - Fy^2, 0));
-            [Fdrag, Froll, Fgrade] = roadForces(car, v, alpha(k+1));
+            [Fdrag, Froll, Fgrade] = roadForces(car, v, alpha(k+1), rf(k+1));
             dec = (Fb + Fdrag + Froll + Fgrade) / m;
             vb(k) = min(sqrt(max(v^2 + 2 * dec * ds, 0)), vf(k));
         end
@@ -123,7 +124,7 @@ function b = benchmarkTime(car, course, varargin)
         dtk = ds ./ max(vm, 1e-3);
         p.t = [0; cumsum(dtk)];
         acc = (vv(2:end).^2 - vv(1:end-1).^2) / (2 * ds);
-        [Fdrag, Froll, Fgrade] = roadForces(car, vm, alpha(1:end-1));
+        [Fdrag, Froll, Fgrade] = roadForces(car, vm, alpha(1:end-1), rf(1:end-1));
         Fdrive = max(0, m * acc + Fdrag + Froll + Fgrade);
         p.E = sum(Fdrive * ds) / car.eta;
         p.v = vv;

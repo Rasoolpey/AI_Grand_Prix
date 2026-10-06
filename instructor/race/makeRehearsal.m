@@ -12,6 +12,8 @@ function inbox = makeRehearsal(n, inbox)
 %   Rehearsal:  inbox = makeRehearsal(30);
 %               collectSubmissions(inbox);  makeFinals(seed);
 %               tic; qualify('AllowFlagged', false); toc;  raceDay('SaveFrames', 'frames')
+%   Or in this MATLAB (finalRace): delete Team02's zip first (it loops forever), then
+%               finalRace(inbox, 'Paths', "practice")
 %
 %   See also: collectSubmissions, qualify, raceDay
     here = fileparts(mfilename('fullpath'));

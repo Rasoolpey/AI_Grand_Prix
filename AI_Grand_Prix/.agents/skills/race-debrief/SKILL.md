@@ -8,7 +8,7 @@ description: Run a headless practice race on one path in MATLAB, export the lap 
 The student runs the engineering loop. You run the race, read the telemetry and test their diagnosis against the data.
 They decide what to change and whether to keep it.
 
-1. Pick the path the student asks about (`"drag"`, `"technical"`, `"endurance"` or `"wet"`; default: their weakest path
+1. Pick the path the student asks about (`"drag"`, `"technical"`, `"endurance"`, `"mud"` or `"wet"`; default: their weakest path
    from `student/engineering_log.md`, else `"technical"`). Run this through the `matlab` MCP server
    (`evaluate_matlab_code`), with `P` set to that path:
    ```matlab
@@ -34,7 +34,8 @@ They decide what to change and whether to keep it.
 
 3. Open `lapPlot.png` yourself and name the **limiting factor** from the evidence:
    - **power / gearing**: full throttle on straights, speed flat at v_gear or rising slowly; the benchmark is close.
-   - **grip**: grip use near 1 in corners, understeer marks, speed at the eq. 6 line; a tyre or aero question.
+   - **grip**: grip use near 1 in corners, understeer marks, speed at the eq. 6 line; a tyre or aero question. On mud
+     and wet points the grip is mu x 0.6 (the eq. 6 line drops there): does the driver read `obs.previewPoints(:,4)`?
    - **energy**: battery near 0 before the end, or the controller slowed down to save it; a battery or strategy question.
    - **control**: speed well below the eq. 6 line and the benchmark, braking early or too long, oscillating steering,
      off-track incidents; a controller question (the most common one).
@@ -50,4 +51,4 @@ They decide what to change and whether to keep it.
 5. **Don't change anything** until the student agrees; they may change your proposal. After the change, run this skill
    again, show before → after, and ask whether to **keep or undo** it. If they ask, add the before → after numbers to
    the change log in `student/engineering_log.md` (the 📏 column only). Before finishing, check all paths:
-   `practiceRace('Path', 'all')`.
+   `practiceRace('Path', 'all')`. A better overall is saved as their best model automatically; say whether it was.

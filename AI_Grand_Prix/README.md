@@ -14,8 +14,8 @@ data, and explain it.
 
 | | |
 |---|---|
-| **You hand in** | your car (`student/carDesign.m`), your driver (`student/controller.m`, `student/robotConfig.m`) and your engineering log (`student/engineering_log.md`), all with `submitCar` |
-| **You are scored on** | your overall score on race day, across three new paths (see *How you're scored*). Two awards are judged from your log: 🧠 best engineering explanation and 🤖 best use of the agent |
+| **You hand in** | your **best model**: the car, driver and tuning that scored your best overall, saved automatically as `best_model/<team>.zip`, plus your engineering log. `submitCar` does it |
+| **You are scored on** | your overall score on race day, across four new paths (see *How you're scored*). Two awards are judged from your log: 🧠 best engineering explanation and 🤖 best use of the agent |
 | **You will learn** | how to make engineering trade-offs from data, and how to work with an AI agent while you stay the engineer in charge |
 
 You work in pairs (solo is fine when pairing isn't practical). The agent can run MATLAB and write code much faster than
@@ -33,6 +33,7 @@ wheel, 1 m wheelbase), driving on a 2-D road that can go up and down hills. Ever
    hold the car back. Speed changes by force ÷ mass (eq. 1).
 3. **Check the tyres' grip.** The tyres have **one** grip budget, μ·N, shared by turning, driving and braking (eq. 5).
    If you ask for more turning than the grip allows, the car **understeers**: it runs wide and has no grip left to brake.
+   On a wet patch or in **mud** the grip is lower (μ × 0.6), and mud is also sticky: rolling resistance × 4.
 4. **Drain the battery** by the energy the motor delivers, divided by the 0.85 efficiency (eq. 8). Braking recovers
    nothing. An empty battery means no drive: the car coasts.
 
@@ -96,6 +97,7 @@ The push is **F_drive ≤ min(P / v, F_gear)**: at low speed the gearing caps it
 
 - ▲ Softer: more grip, so faster corners (eq. 6) and harder braking.
 - ▼ Softer tyres also roll less freely (F_roll = C_rr·N): more energy per lap, and a little slower in a straight line.
+  In mud the rolling resistance is four times bigger, so this cost grows too.
 
 ### Aero kit: drag against downforce (eqs. 3, 6)
 
@@ -142,18 +144,19 @@ recovered when braking. **Mass = 70 kg + motor + battery + aero.** The starting 
 | **Drag strip** (`"drag"`) | 150 m straight from a standing start, then **stop** inside a 10 m box | motor, gearing, mass, braking |
 | **Technical circuit** (`"technical"`) | ≈ 370 m, hairpins, a chicane, short straights; 1 lap | tyres, mass, your controller |
 | **Endurance** (`"endurance"`) | ≈ 380 m fast circuit with a hill; 5 laps | battery, aero, rolling loss, energy strategy |
-| Wet practice (`"wet"`) | a short loop with one wet patch (grip × 0.6–0.8, flagged in advance); practice only | reading the road ahead |
+| **Muddy road** (`"mud"`) | ≈ 430 m rally loop, 1 lap: three **mud** sections (brown: grip × 0.6, rolling resistance × 4) and a hill | tyres, motor, energy, and a driver that reads the surface ahead |
+| Wet practice (`"wet"`) | a short loop with one wet patch (grip × 0.6–0.8, flagged in advance); extra practice, not scored | reading the road ahead |
 
-**Race day** uses the same three kinds of path with **new layouts**: different straight lengths, corner radii and turn
-directions. A car and controller tuned to the practice layouts will be caught out. Finishing rules and penalties are in
-the *Reference* section below.
+**Race day** uses the same four kinds of path with **new layouts**: longer and busier, with different straight lengths,
+corner radii and turn directions, and wet or muddy patches where you don't expect them. A car and controller tuned to the
+practice layouts will be caught out. Finishing rules and penalties are in the *Reference* section below.
 
 ## 🏁 How you're scored
 
 - Per path: **s = min(120, 100 × T_ref / T)**, where T is your time plus penalties and T_ref is the reference car's time.
   A DNF scores 0.
-- **Overall = 0.6 × mean(s) + 0.4 × min(s).** Your **weakest path** counts for 40 %. A specialist scoring 95 / 95 / 20
-  gets 50; an all-rounder scoring 75 / 75 / 75 gets 75.
+- **Overall = 0.6 × mean(s) + 0.4 × min(s)** over the four paths. Your **weakest path** counts for 40 %. A specialist
+  scoring 95 / 95 / 95 / 20 gets 54; an all-rounder scoring 75 / 75 / 75 / 75 gets 75.
 - Ranking: cars that finished every path come first, ordered by overall score; then the others, by paths completed.
 - Awards: 🏁 overall champion · ⚡ best single path · 🧠 best engineering explanation · 🤖 best use of the agent (the last
   two are judged from your `engineering_log.md`).
@@ -173,7 +176,7 @@ No car is best on every path, for three reasons:
    power and range cost mass.
 
 The scoring makes this sharper. Suppose a change makes your best path 10 points better and your weakest path 5 points
-worse. Your overall **drops**: 0.6 × (10 − 5) / 3 − 0.4 × 5 = −1. Before you keep any change, check **all three paths**.
+worse. Your overall **drops**: 0.6 × (10 − 5) / 4 − 0.4 × 5 = −1.25. Before you keep any change, check **all four paths**.
 
 The parts also **interact**. Whether 70 Wh is enough depends on your motor, gearing, aero and tyres, and on how hard your
 controller drives. A part that's right for one car can be wrong for another.
@@ -187,9 +190,27 @@ drives close to its limits.**
 2. Decide what you would give up to improve it. **Predict** which path pays for it, and write that in your log.
 3. Try designs without touching your file: `d = carDesign(); d.tyres = "soft"; garage(d)`. (Run `garage` once first
    in each MATLAB session, so MATLAB can find your files.)
-4. Compare all three paths every time. Keep the change only if the **overall** goes up.
+4. Make the change, run `practiceRace('Path', 'all')`, and race your **best model's ghost** on all four paths. If the
+   **overall** goes up, the new version is saved as your best model automatically. If not, nothing is saved.
 
 There's no answer key. Two teams can race different cars and both be right, as long as each can show why.
+
+---
+
+## 👻 Your best model and its ghost
+
+Every time you run **`practiceRace('Path', 'all')`**, your car drives all four paths, then a fast replay shows your
+run next to a **grey ghost car: your best run so far**. You see at once where you gained or lost time. Then:
+
+- **Overall better than your best?** Your car, driver and tuning are saved as your **best model**, replacing the old
+  one: `best_model/<team>.zip`. There is only ever **one**.
+- **Not better?** Nothing is saved. Your best model stays as it was, so an experiment can never cost you your best car.
+
+`bestModel` shows your best model: its scores per path, its parts, and where the file is. **That file is what you hand
+in** (`submitCar` checks it and adds your log). The name shown on race day is `car.team` inside it, so **set your team
+name first** (step 1). Same car with a new name? Run `practiceRace('Path', 'all')` again and it is renamed.
+
+On race day, your instructor puts every team's best model in one folder and races them all together on the projector.
 
 ---
 
@@ -216,16 +237,16 @@ Everything you decide goes in **`student/engineering_log.md`**. It's handed in w
 
 | Step | Time | You do, or type to the agent | You decide (write it in the log) |
 |---|---|---|---|
-| **1. Meet your car** | 5 min | Yourself, in MATLAB: `cd(fullfile(getenv('USERPROFILE'), 'Documents', 'AI_Grand_Prix-main', 'AI_Grand_Prix'))`, then `garage`, then `practiceRace` (watch it drive), then `practiceRace('Path', 'all')` | Your baseline scores, your **weakest path**, and your guess *why* |
+| **1. Meet your car** | 5 min | Write your **team name** in `student/carDesign.m` (`car.team`). Then yourself, in MATLAB: `cd(fullfile(getenv('USERPROFILE'), 'Documents', 'AI_Grand_Prix-main', 'AI_Grand_Prix'))`, `garage`, `practiceRace` (watch it drive), then `practiceRace('Path', 'all')`: your first best model is saved | Your baseline scores, your **weakest path**, and your guess *why* |
 | **2. Brief the agent** | 3 min | `Read AGENTS.md and the project, then tell me in 5 bullet points what you understood. Don't change anything.` | Is its summary right? Correct it if not |
 | **3. Design the car** | 10 min | Read *Find your sweet spot*. Write 1–2 candidate designs and your **prediction** in the log. Then: `Run the car-design-review skill on the candidates in my engineering log.` | The design you race, and your **trade-off** in your own words (3–4 sentences, with numbers). Then edit `student/carDesign.m` yourself (it's 5 lines) |
 | **4. Choose how to drive** | 5 min | `Propose three ways my controller could choose its target speed from obs.previewPoints and obs.car. Pros, cons, and the risk on new layouts. Don't implement anything.` | Which approach, and why |
-| **5. Improve, one change at a time** | 20 min, repeat | `Run the race-debrief skill on the technical path.` (or your weakest path) | What limits the car (say it *before* the agent does). Then approve, change or reject its one proposal, and after the run: keep it or undo it |
-| **6. Check and submit** | 5 min | `Run Pattern 7 from AGENT_GUIDE.md.` (the overfitting check), then `submitCar` | Is it ready for layouts you have never seen? |
+| **5. Improve, one change at a time** | 20 min, repeat | `Run the race-debrief skill on the technical path.` (or your weakest path). After each change, run `practiceRace('Path', 'all')` yourself: you race your best model's ghost, and a better overall is saved | What limits the car (say it *before* the agent does). Then approve, change or reject its one proposal, and after the run: keep it or undo it |
+| **6. Check and hand in** | 5 min | `Run Pattern 7 from AGENT_GUIDE.md.` (the overfitting check), then `bestModel` and `submitCar` | Is your best model ready for layouts you have never seen? |
 
 Steps 5–6 come back in the **final sprint** before the code freeze. You can go back to step 3 at any time: once your
-controller drives better, a different car may be the better choice. More prompts, and how to write your own:
-[AGENT_GUIDE.md](AGENT_GUIDE.md).
+controller drives better, a different car may be the better choice. Your best model is safe while you experiment. More
+prompts, and how to write your own: [AGENT_GUIDE.md](AGENT_GUIDE.md).
 
 ### ✅ Check the agent's work
 - It **ran the race** after every change, and the numbers come from that run, not from "this should be faster".
@@ -253,7 +274,7 @@ controller drives better, a different car may be the better choice. More prompts
 | | Finish | Penalties (still a finish) | DNF |
 |---|---|---|---|
 | Drag strip | cross the line, then **come to rest** | stop past the box (in the run-off): **+3 s** | hit the barrier at the end; over 30 s |
-| Circuits | pass **every checkpoint in order**, cross the line forwards, every lap | off-track **+5 s** per incident; barrier **+10 s** per contact | a checkpoint missed (shortcut); stopped > 3 s; time limit; controller error |
+| Circuits (technical, endurance, muddy road) | pass **every checkpoint in order**, cross the line forwards, every lap | off-track **+5 s** per incident; barrier **+10 s** per contact | a checkpoint missed (shortcut); stopped > 3 s; time limit; controller error |
 
 An empty battery gives no drive: the car **coasts**, and still finishes if it rolls over the line.
 
@@ -266,11 +287,12 @@ testMCP                                    % check that everything is installed
 garage                                     % your car: drawing, numbers, cost, estimates
 d = carDesign(); d.aero = "none"; garage(d)   % try a design without editing your file
 practiceRace                               % technical circuit, with animation
-practiceRace('Path', 'drag')               % "drag" | "technical" | "endurance" | "wet"
+practiceRace('Path', 'mud')                % "drag" | "technical" | "endurance" | "mud" | "wet"
 r = practiceRace('Path', 'endurance', 'Headless', true);   % fast, no animation
 plotLap(r)                                 % lap report: grip use, speed vs eq. 6, battery, ...
-practiceRace('Path', 'all')                % the three paths + your overall score
-submitCar                                  % check and hand in (you can resubmit until the freeze)
+practiceRace('Path', 'all')                % the four paths vs your best (ghost) + overall; saves a better model
+bestModel                                  % your best model: scores, parts, the file you hand in
+submitCar                                  % check your best model and hand it in (resubmit until the freeze)
 ```
 
 **Garage estimates and the "benchmark" time** come from the equations with near-perfect driving on the centreline.
@@ -283,12 +305,13 @@ They are estimates, not limits; your controller decides how close you get (*effi
 ```
 AI_Grand_Prix/
 ├── README.md  PHYSICS.md  AGENTS.md  AGENT_GUIDE.md
-├── garage.m  practiceRace.m  plotLap.m  submitCar.m  testMCP.m
-├── student/                 ⭐ your files (all handed in by submitCar)
+├── garage.m  practiceRace.m  plotLap.m  bestModel.m  submitCar.m  testMCP.m
+├── student/                 ⭐ your files
 │   ├── engineering_log.md   your predictions, decisions and trade-off
-│   ├── carDesign.m          the 5 parts
+│   ├── carDesign.m          the 5 parts and your team name
 │   ├── controller.m         the driver
 │   └── robotConfig.m        tuning values
+├── best_model/              your best model (saved by practiceRace 'all'): <team>.zip = your hand-in
 ├── tracks/                  practice paths (read-only)
 └── simulator/               physics and rules (DO NOT MODIFY)
 ```
@@ -304,7 +327,7 @@ function command = controller(obs, config)
 | Input | Meaning |
 |---|---|
 | `obs.position`, `obs.heading`, `obs.speed`, `obs.steeringAngle` | where the car is, where it points, how fast |
-| `obs.previewPoints` | next ~60 centreline points, ~1 m apart: `[x y grade(%) wet(0/1)]` |
+| `obs.previewPoints` | next ~60 centreline points, ~1 m apart: `[x y grade(%) slippery(0/1) mud(0/1)]` (slippery = wet or mud) |
 | `obs.car` | the car you built: `mass, mu, Crr, power, CdA, ClA, vGear, Fgear, ...` |
 | `obs.batteryWh`, `obs.batteryFrac` | energy left |
 | `obs.path` | `type, lap, laps, lapsLeft, nextCheckpoint, distanceToFinish, distanceToStop` |

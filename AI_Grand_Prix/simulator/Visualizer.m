@@ -5,11 +5,14 @@ classdef Visualizer < handle
 %   ║  SIMULATOR FILE — DO NOT MODIFY     ║
 %   ╚══════════════════════════════════════╝
 %
-%   viz = Visualizer(course, car)      % opened by RaceSimulation when not headless
+%   viz = Visualizer(course, car)          % opened by RaceSimulation when not headless
+%   viz = Visualizer(course, car, ghost)   % also a ghost car: a previous run's log
+%                                          % (fields t, x, y, theta; e.g. your best run)
 %   viz.update(state, info, hud)
 %
 %   Map: grass, road shaded by height (lighter = higher), kerbs, run-off and
-%   barriers, checkpoints, chequered finish line, stop box, wet patches (blue).
+%   barriers, checkpoints, chequered finish line, stop box, wet patches (blue),
+%   mud (brown).
 %   HUD: time, speed, throttle/brake bar, battery, grade, lap and checkpoint,
 %   penalties, and the FRICTION-CIRCLE DOT: the dot shows how much of the
 %   tyres' grip is in use (centre = none, on the circle = at the limit,
@@ -19,12 +22,14 @@ classdef Visualizer < handle
 %     ax = Visualizer.drawCourse(ax, course)
 %     g  = Visualizer.makeCar(ax, colour, aeroId)
 %     Visualizer.placeCar(g, x, y, theta)
+%     g  = Visualizer.makeGhost(ax, aeroId)      a see-through grey car
 %
 %   See also: RaceSimulation, practiceRace
 
     properties (Access = private)
         fig; ax; carG; trail; trailX; trailY
         hudText; thrBar; brkBar; batBar; fcDot; fcAx
+        ghost; ghostG; ghostLbl
     end
 
     properties (Constant)
@@ -34,16 +39,22 @@ classdef Visualizer < handle
         KERB_W  = [0.96 0.96 0.96]
         SAND    = [0.82 0.75 0.55]
         WET     = [0.25 0.45 0.85]
+        MUD     = [0.45 0.30 0.16]
     end
 
     methods
-        function obj = Visualizer(course, car)
+        function obj = Visualizer(course, car, ghost)
             obj.fig = figure('Name', "AI Grand Prix - " + course.name, 'Color', Visualizer.GRASS, ...
                 'NumberTitle', 'off', 'Position', [60 60 1150 820]);
             obj.ax = axes(obj.fig, 'Position', [0.02 0.02 0.72 0.92]);
             Visualizer.drawCourse(obj.ax, course);
             title(obj.ax, "AI Grand Prix - " + course.name + "   |   " + car.team, 'Color', [0.1 0.1 0.1], 'FontSize', 13);
 
+            if nargin >= 3 && ~isempty(ghost) && ~isempty(ghost.t)
+                obj.ghost = ghost;
+                obj.ghostG = Visualizer.makeGhost(obj.ax, car.parts.aero);
+                obj.ghostLbl = text(obj.ax, NaN, NaN, ' best', 'Color', [1 1 1], 'FontSize', 8, 'FontWeight', 'bold');
+            end
             obj.trailX = nan(1500, 1);  obj.trailY = nan(1500, 1);
             obj.trail = plot(obj.ax, nan, nan, '-', 'Color', [car.colour 0.6], 'LineWidth', 2);
             obj.carG  = Visualizer.makeCar(obj.ax, car.colour, car.parts.aero);
@@ -84,6 +95,12 @@ classdef Visualizer < handle
         function update(obj, s, info, h)
             if ~isvalid(obj.fig), return; end
             Visualizer.placeCar(obj.carG, s.x, s.y, s.theta);
+            if ~isempty(obj.ghost)
+                k = min(numel(obj.ghost.t), max(1, round(h.t / 0.02)));
+                gx = double(obj.ghost.x(k));  gy = double(obj.ghost.y(k));
+                Visualizer.placeCar(obj.ghostG, gx, gy, double(obj.ghost.theta(k)));
+                set(obj.ghostLbl, 'Position', [gx + 1.2, gy + 1.2, 0]);
+            end
             obj.trailX = [obj.trailX(2:end); s.x];  obj.trailY = [obj.trailY(2:end); s.y];
             set(obj.trail, 'XData', obj.trailX, 'YData', obj.trailY);
             if h.laps > 1, lapStr = sprintf('Lap      %d / %d\n', h.lap, h.laps); else, lapStr = ''; end
@@ -131,9 +148,11 @@ classdef Visualizer < handle
             shade = 0.85 + 0.45 * (z - min(z)) / zr;
             C = reshape(Visualizer.ASPHALT, 1, 1, 3) .* shade';
             C = repmat(C, 2, 1, 1);
-            wet = course.muFactor < 1;  if closed, wet(end+1) = wet(1); end
+            mud = course.rollFactor > 1;  wet = course.muFactor < 1 & ~mud;
+            if closed, wet(end+1) = wet(1); mud(end+1) = mud(1); end
             for c = 1:3
-                Cc = C(:,:,c);  Cc(:, wet) = 0.6 * Cc(:, wet) + 0.4 * Visualizer.WET(c);  C(:,:,c) = Cc;
+                Cc = C(:,:,c);  Cc(:, wet) = 0.6 * Cc(:, wet) + 0.4 * Visualizer.WET(c);
+                Cc(:, mud) = 0.25 * Cc(:, mud) + 0.75 * Visualizer.MUD(c);  C(:,:,c) = Cc;
             end
             surface(ax, [L(:,1)'; R(:,1)'], [L(:,2)'; R(:,2)'], zeros(2, size(L,1)), C, ...
                 'EdgeColor', 'none', 'FaceColor', 'interp');
@@ -185,6 +204,15 @@ classdef Visualizer < handle
             tx = [-0.35 0.35 0.35 -0.35];  ty = [0 0 0.16 0.16];
             g.tx = [tx + 0.6, NaN, tx + 0.6, NaN, tx - 0.6, NaN, tx - 0.6];
             g.ty = [ty + 0.3, NaN, ty - 0.46, NaN, ty + 0.3, NaN, ty - 0.46];
+        end
+
+        function g = makeGhost(ax, aeroId)
+        % A see-through grey car for a previous run (the ghost).
+            if nargin < 2, aeroId = "none"; end
+            g = Visualizer.makeCar(ax, [0.92 0.92 0.92], aeroId);
+            for f = ["body", "fw", "rw", "tyre"]
+                set(g.(f), 'FaceAlpha', 0.45, 'EdgeAlpha', 0.45);
+            end
         end
 
         function placeCar(g, x, y, th)

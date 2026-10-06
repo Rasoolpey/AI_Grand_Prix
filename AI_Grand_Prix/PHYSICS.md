@@ -11,8 +11,8 @@ Notation: *m* mass (kg), *v* speed (m/s), *g* = 9.81 m/s², ρ = 1.2 kg/m³ air 
 | **1** | Newton along the road | **m·dv/dt = F_drive − F_drag − F_roll − F_grade − F_brake** | mass: every part except gearing |
 | 2 | Motor | F_drive ≤ min(P / v, F_gear), and F_drive = 0 at or above v_gear | motor (P), gearing (v_gear, F_gear) |
 | 3 | Air | F_drag = ½ρ·C_DA·v²  ·  F_down = ½ρ·C_LA·v² | aero kit |
-| 4 | Load and rolling | N = m·g·cos α + F_down  ·  F_roll = C_rr·N | tyres (C_rr), aero |
-| **5** | Friction circle | **√(F_x² + F_y²) ≤ μ·N** | tyres (μ) |
+| 4 | Load and rolling | N = m·g·cos α + F_down  ·  F_roll = C_rr·N  (× 4 on mud) | tyres (C_rr), aero |
+| **5** | Friction circle | **√(F_x² + F_y²) ≤ μ·N**  (μ × 0.6 on wet or mud) | tyres (μ) |
 | **6** | Safe corner speed | **v² = μ·g·cos α / (\|κ\| − μ·ρ·C_LA / (2m))** | tyres, aero, mass |
 | 7 | Steering | dθ/dt = v·tan δ / L  (L = 1 m) | fixed |
 | **8** | Battery | **E ← E − F_drive·v·dt / η**  (η = 0.85; Wh = J / 3600) | battery |
@@ -25,8 +25,8 @@ Notation: *m* mass (kg), *v* speed (m/s), *g* = 9.81 m/s², ρ = 1.2 kg/m³ air 
 1. **Newton.** Speed changes only when the forces along the road don't balance; a heavier car changes speed more slowly.
 2. **Motor.** At low speed the gearing limits the push (F_gear); higher up, power does (P / v); at v_gear the motor stops pushing. Short gearing pulls hard but tops out early; long gearing is the reverse.
 3. **Air.** Drag and downforce both grow with v²: downforce is free grip at speed, but it costs drag on every straight.
-4. **Load.** Downforce presses the car into the road (more grip); soft tyres grip more but roll less freely (higher C_rr).
-5. **Friction circle.** The tyres have **one** grip budget, shared between braking, driving and turning. Brake hard in a corner and there is less grip left for turning.
+4. **Load.** Downforce presses the car into the road (more grip); soft tyres grip more but roll less freely (higher C_rr). Mud makes every tyre roll four times less freely.
+5. **Friction circle.** The tyres have **one** grip budget, shared between braking, driving and turning. Brake hard in a corner and there is less grip left for turning. On a wet patch or mud the budget is 0.6 × as big.
 6. **Corner speed.** The fastest you can take a corner without sliding. Bigger μ or bigger radius → faster. Downforce helps a lot in fast corners and barely in hairpins.
 7. **Steering.** A bicycle model: the tighter the wheel angle, the tighter the turn. If you ask for more turning than the grip allows, the car **understeers** (goes wider than you steered) and has no grip left to brake.
 8. **Battery.** Energy is used only while driving, and the faster you go the more you use (drag grows with v²). Empty battery = coasting.
@@ -54,7 +54,8 @@ so v² appears on both sides.
 
 1. **Curvature ahead.** For preview points i−2, i, i+2 (≈ 4 m apart), the curvature of the circle through three points
    a, b, c is κ = 2·((b−a) × (c−b)) / (|b−a|·|c−b|·|c−a|).
-2. **Corner speed** at each point: `vCorner = cornerSpeed(obs.car, kappa, alpha, muFactor)` (wet points: assume μ × 0.6).
+2. **Corner speed** at each point: `vCorner = cornerSpeed(obs.car, kappa, alpha, muFactor)` (slippery points, wet or
+   mud, have `obs.previewPoints(:,4) == 1`: use muFactor 0.6; mud points also have `(:,5) == 1`).
    Keep a margin, e.g. 0.9 × vCorner.
 3. **Brake in time.** You can still reach vCorner at a point *d* metres ahead if you are going no faster than
    √(vCorner² + 2·a_brake·d), with a_brake a bit below μ·g. The target speed now is the **smallest** of those over all preview points.
