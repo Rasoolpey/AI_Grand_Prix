@@ -65,7 +65,8 @@ function S = finalRace(folder, varargin)
         F.courses = arrayfun(@(n) loadPath(n), F.ids, 'UniformOutput', false);
         F.tref = arrayfun(@(n) practiceReference(n), F.ids);
         F.seed = NaN;  F.created = string(datetime('now'));
-        fprintf('REHEARSAL on the practice paths (race-day paths: run makeFinals(seed) first)\n');
+        fprintf(['REHEARSAL on the practice paths. For the race-day paths, put your private finalTemplates.m in ' ...
+            'instructor/race/finals/ and run makeFinals(<secret number>) first.\n']);
     end
     nP = numel(F.ids);
 

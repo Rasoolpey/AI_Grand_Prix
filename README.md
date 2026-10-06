@@ -5,11 +5,13 @@ Two parts, one folder:
 | | Folder | What you do |
 |---|---|---|
 | **Part 1 — AI tools** | `AI_Tools\` | Turn a research topic into a literature review and a research proposal, with an AI agent that searches Scopus (Q1 journals) for you and writes an IEEE-format report |
-| **Part 2 — AI Grand Prix** | `AI_Grand_Prix\` | Design an autonomous race car with an AI agent that runs MATLAB for you, then race everyone else |
+| **Part 2 — AI Grand Prix** | `AI_Grand_Prix\` | Design a small electric race car and the code that drives it, with an AI agent that runs MATLAB for you. Beat your own best run (a ghost car), then race everyone on the projector |
+
+Do the **setup** once. Then **click a part below to open its instructions** (▶ closed, ▼ open).
 
 ---
 
-## 1. Setup (once, about 5 minutes)
+## 1. Setup (once, about 5–15 minutes)
 
 **MATLAB must already be installed and activated** (R2024a or later recommended). The Grand Prix uses **base MATLAB only**:
 no Simulink or additional toolboxes are required. MATLAB Copilot is optional. The workshop installer sets up the agent's MATLAB connection.
@@ -19,21 +21,26 @@ no Simulink or additional toolboxes are required. MATLAB Copilot is optional. Th
    *Install*. Open the Antigravity panel and sign in with your student Google account.
    (If you skip this, the installer in step 4 adds the extension for you; you still sign in yourself.)
 2. **Get a Scopus API key** at https://dev.elsevier.com → *I want an API key* (register with your university e-mail).
+   It is only needed for Part 1.
 3. **Download the workshop** (no Git needed): open https://github.com/Rasoolpey/AI_Grand_Prix → green **Code** button →
    **Download ZIP**. In File Explorer, right-click the zip → **Extract All…** → choose your **Documents** folder → *Extract*.
 4. **Open a terminal in that folder:** open **`Documents\AI_Grand_Prix-main`** (if you see another `AI_Grand_Prix-main`
-   inside it, open that one: it is the folder with `setup.ps1` and `README.md` in it). Right-click an empty spot in the folder
-   → **Open in Terminal** (Windows 10: hold *Shift*, right-click → *Open PowerShell window here*). Paste and press Enter:
+   inside it, open that one: it is the folder with `setup.ps1`, `README.md`, `AI_Tools` and `AI_Grand_Prix` in it).
+   Right-click an empty spot in the folder → **Open in Terminal** (Windows 10: hold *Shift*, right-click → *Open
+   PowerShell window here*). Paste and press Enter:
    ```powershell
    irm https://raw.githubusercontent.com/Rasoolpey/AI_Grand_Prix/main/setup.ps1 | iex
    ```
-   It installs everything **in this folder**: `Documents\AI_Grand_Prix-main` is the folder you work in from now on. Don't
-   move or rename it after setup (the tools are set up for this path; if you do, run setup again in the new place).
-5. Paste your Scopus key when asked (it stays hidden; that's normal). Press **Enter** to skip the institution token.
-   No key yet? Press Enter; you can paste it later into `AI_Tools\my_keys.env`.
+   It installs everything **in this folder**, your **workshop folder** from now on. Don't move or rename it after setup
+   (the tools are set up for this path; if you do, run setup again in the new place).
+   *Cloned it with Git, or saved it somewhere else?* Open the terminal in that folder instead: setup installs into the
+   folder you run it from, whatever its name, as long as `setup.ps1`, `AI_Tools` and `AI_Grand_Prix` are in it.
+5. Paste your Scopus key when asked (it stays hidden; that's normal), then press **Enter** to skip the institution token.
+   No key yet? Press Enter; you can paste it later into `AI_Tools\my_keys.env` (Part 1 shows how).
 6. Wait for **ALL SET!** The last check starts MATLAB and drives a test race, which takes 1–3 minutes.
+   Then, if VS Code was already open, reload it: `Ctrl+Shift+P` → *Reload Window*.
 
-You now have, in `Documents\`:
+You now have, in your workshop folder (`Documents\AI_Grand_Prix-main` if you followed the steps above):
 ```
 AI_Grand_Prix-main\
   README.md        this guide
@@ -42,13 +49,19 @@ AI_Grand_Prix-main\
   AI_Grand_Prix\   Part 2
   instructor\      for the instructor (you can ignore it)
 ```
-Nothing else is installed (the tools sit in a hidden `.tools` folder), apart from the Antigravity extension in your VS Code.
+Nothing else is installed (the tools sit in a hidden `.tools` folder), apart from the Antigravity extension in your VS Code
+and the list of tools it may use (`%USERPROFILE%\.gemini\config\mcp_config.json`). Setup also puts two shortcuts on your
+desktop: **AI Workshop - Part 1 AI Tools** and **AI Workshop - Part 2 Grand Prix**.
 
 ---
 
-## 2. Part 1 — AI tools for research
+<details>
+<summary><b>📚 Part 1 — AI tools for research</b> &nbsp;(click to open)</summary>
 
-**Open the folder:** in VS Code, *File → Open Folder* → `Documents\AI_Grand_Prix-main\AI_Tools` (or the desktop shortcut **AI Workshop – Part 1 AI Tools**).
+<br>
+
+**Open the folder:** in VS Code, *File → Open Folder* → your workshop folder's `AI_Tools` (or the desktop shortcut
+**AI Workshop - Part 1 AI Tools**).
 
 **Check:** in the Antigravity panel, the list of **MCP servers** shows `matlab`, `google-scholar`, `scopus`, `markitdown`.
 
@@ -70,41 +83,7 @@ your rules override the defaults.
 
 ✅ **Check the agent's work:** every claim in `4_review\review.md` must point to a row in `4_review\evidence.csv`.
 
----
-
-## 3. Part 2 — AI Grand Prix
-
-**Open the folder:** in VS Code, `Documents\AI_Grand_Prix-main\AI_Grand_Prix` (or **AI Workshop – Part 2 Grand Prix**). The Antigravity panel's MCP servers list shows the same 4 servers as in Part 1.
-
-You build a small electric race car from five parts (budget 80 credits), write the code that drives it, and race it on
-four paths (drag strip, technical circuit, endurance, muddy road), first in practice, then on race day on layouts you have
-never seen. No car is best everywhere: a part that helps on one path costs you on another, so your job is to find the
-**sweet spot** and explain it with data. Every time your overall score beats your best, your **best model** is saved
-automatically (and shown as a ghost car next time). That one model is what races on the projector at the end.
-
-**This time you are the race engineer and the agent is your pit crew.** It runs MATLAB, reads the telemetry and writes
-code fast, but every decision is yours: which parts, which driving strategy, which change to try, whether to keep it. Before
-each decision you write down what you **predict**, and afterwards whether you were right, in **`student\engineering_log.md`**.
-That log is handed in with your best model.
-
-| Step | You do, or type to the agent | You decide (in the log) |
-|---|---|---|
-| 1 | *(you)* Write your team name in `student\carDesign.m`. In MATLAB, run `garage`, `practiceRace` and `practiceRace('Path', 'all')`. Watch your car drive | Your weakest path, and why |
-| 2 | `Read AGENTS.md and the project, then tell me in 5 bullet points what you understood. Don't change anything.` | Is its summary right? |
-| 3 | Write 1–2 candidate designs and your prediction in the log, then `Run the car-design-review skill on the candidates in my engineering log.` | The design you race, and your trade-off in your own words |
-| 4 | `Propose three ways my controller could choose its target speed. Don't implement anything.` | Your driving strategy |
-| 5 | `Run the race-debrief skill on the technical path.` (repeat). After each change: `practiceRace('Path', 'all')`, racing your best model's ghost | What limits the car; approve each change, keep it or undo it |
-| 6 | The overfitting check (Pattern 7 in `AGENT_GUIDE.md`), then `bestModel` and `submitCar` (hands in your best model) | Is it ready for new layouts? |
-
-The full steps, rules, parts and scoring are in `AI_Grand_Prix\README.md`. The equations are in `AI_Grand_Prix\PHYSICS.md`.
-How to talk to your agent is in `AI_Grand_Prix\AGENT_GUIDE.md`.
-
-✅ **Stay in charge:** the agent asks before it changes anything. If it decides for you anyway, type
-`Stop. Undo that and give me the options instead. I'll choose.`
-
----
-
-## 4. Your Scopus key
+#### Your Scopus key
 
 It lives in **`AI_Tools\my_keys.env`**. You see it in the VS Code file list when you open Part 1:
 ```
@@ -114,13 +93,88 @@ SCOPUS_INST_TOKEN=
 To add or change it: paste it after the `=`, save (Ctrl+S), then reload VS Code (`Ctrl+Shift+P` → *Reload Window*).
 The institution token is only needed **off campus** without the VPN (ask the library).
 
+</details>
+
+<details>
+<summary><b>🏎️ Part 2 — AI Grand Prix</b> &nbsp;(click to open)</summary>
+
+<br>
+
+**Open the folder:** in VS Code, *File → Open Folder* → your workshop folder's `AI_Grand_Prix` (or the desktop shortcut
+**AI Workshop - Part 2 Grand Prix**).
+
+**Check:** the Antigravity panel's MCP servers list shows the same 4 servers as in Part 1, and when you ask the agent
+`Which skills do you have?` it names **`car-design-review`** and **`race-debrief`**.
+
+#### What you are doing
+
+You build a small electric race car from **five parts** on an 80-credit budget, and write the code that drives it. It
+races on **four paths**: a drag strip, a technical circuit, a 5-lap endurance and a **muddy road** (mud: less grip, much
+more rolling resistance). No car is best everywhere: a part that helps on one path costs you on another, so your job is to
+find the **sweet spot** and explain it with data.
+
+**You are the race engineer and the agent is your pit crew.** It runs MATLAB, reads the telemetry and writes code fast, but
+every decision is yours: which parts, which driving strategy, which change to try, whether to keep it. Before each decision
+you write down what you **predict**, and afterwards whether you were right, in **`student\engineering_log.md`**.
+
+#### Your best model and its ghost
+
+Every time you run **`practiceRace('Path', 'all')`**, your car drives all four paths and a fast replay shows it next to a
+**grey ghost car: your best run so far**. If your **overall score** is better, your car, driver and tuning are saved as your
+**best model**, replacing the old one: `AI_Grand_Prix\best_model\<team>.zip`. If not, nothing is saved, so an experiment
+can never cost you your best car. There is only ever one best model, and it is what you hand in and what races on race day.
+
+#### The steps
+
+| Step | Time | You do, or type to the agent | You decide (in the log) |
+|---|---|---|---|
+| 1 | 5 min | *(you)* In `student\carDesign.m`, set `car.team` to your **team name** (it is the name on race day) and save. Open **MATLAB**, make the `AI_Grand_Prix` folder the current folder (MATLAB's address bar, or `cd('<your workshop folder>\AI_Grand_Prix')`), then run `garage`, then `practiceRace` (watch your car drive), then `practiceRace('Path', 'all')`: your first best model is saved | Your baseline scores, your weakest path, and why |
+| 2 | 3 min | `Read AGENTS.md and the project, then tell me in 5 bullet points what you understood. Don't change anything.` (the agent's MATLAB starts on first use: about a minute) | Is its summary right? |
+| 3 | 10 min | Write 1–2 candidate designs and your prediction in the log, then `Run the car-design-review skill on the candidates in my engineering log.` | The design you race, and your trade-off in your own words |
+| 4 | 5 min | `Propose three ways my controller could choose its target speed from obs.previewPoints and obs.car. Pros, cons, and the risk on new layouts. Don't implement anything.` | Your driving strategy |
+| 5 | 20 min, repeat | `Run the race-debrief skill on the technical path.` (or your weakest path). After each change you keep, run `practiceRace('Path', 'all')` yourself in MATLAB and race your best model's ghost | What limits the car; approve each change; keep it or undo it |
+| 6 | 5 min | `Run Pattern 7 from AGENT_GUIDE.md.` (the overfitting check), then in MATLAB `bestModel` and `submitCar` | Is your best model ready for layouts you have never seen? |
+
+`submitCar` checks your **best model** (not the files you are editing), runs it on each path, adds your engineering log,
+and copies it to the shared folder if your instructor set one. Otherwise it tells you which file to send.
+
+#### Handy MATLAB commands (in the `AI_Grand_Prix` folder)
+
+```matlab
+garage                                     % your car: drawing, numbers, cost, estimated times
+practiceRace                               % the technical circuit, animated, with your best run as a ghost
+practiceRace('Path', 'mud')                % "drag" | "technical" | "endurance" | "mud" | "wet"
+practiceRace('Path', 'all')                % all four paths vs your ghost, overall score, saves a better model
+r = practiceRace('Path', 'technical', 'Headless', true);  plotLap(r)   % lap report: grip, speed, battery
+bestModel                                  % your best model: scores, parts, the file you hand in
+submitCar                                  % check your best model and hand it in
+```
+
+#### Race day
+
+Your instructor collects every team's best model into one folder and starts the race on the projector: first a
+**scrutineering** screen (every car is checked and driven on the same computer), then **four races** on new layouts with
+every car on the track at once (ghost cars: they never touch), each about 12 seconds long with a live running order,
+then the standings. The names on screen are the team names inside the models.
+
+#### More
+
+The full guide (the parts, how the car is modelled, scoring, the sweet spot): `AI_Grand_Prix\README.md`. The equations:
+`AI_Grand_Prix\PHYSICS.md`. How to talk to your agent: `AI_Grand_Prix\AGENT_GUIDE.md`.
+
+✅ **Stay in charge:** the agent asks before it changes anything. If it decides for you anyway, type
+`Stop. Undo that and give me the options instead. I'll choose.`
+
+</details>
+
 ---
 
-## 5. Finished? (shared PC)
+## Finished? (shared PC)
 ```powershell
 & "$env:USERPROFILE\Documents\AI_Grand_Prix-main\remove-keys.ps1"
 ```
-Or delete the `AI_Grand_Prix-main` folder and the two desktop shortcuts.
+(Installed somewhere else? Run `remove-keys.ps1` from your workshop folder.) Or delete the workshop folder and the two
+desktop shortcuts.
 
 ---
 
@@ -132,13 +186,20 @@ Or delete the `AI_Grand_Prix-main` folder and the two desktop shortcuts.
 | `MATLAB has no licence` | Open MATLAB once normally, sign in, then run setup again. |
 | `Scopus rejected the key` | Check `AI_Tools\my_keys.env`. Off campus you need the VPN or an institution token. |
 | A tool is missing in the Antigravity panel | *Reload Window* (`Ctrl+Shift+P`): VS Code must be reloaded after setup. Still missing? Run the setup command again. |
-| A skill is missing (the agent doesn't know `research-question` etc.) | Open the **part folder** (`AI_Tools` or `AI_Grand_Prix`) in VS Code, not `AI_Grand_Prix-main` itself. |
+| A skill is missing (the agent doesn't know `research-question` or `race-debrief`) | Open the **part folder** (`AI_Tools` or `AI_Grand_Prix`) in VS Code, not the workshop folder itself. |
 | No Antigravity panel in VS Code | Install the extension: *Extensions* (`Ctrl+Shift+X`) → `Google Antigravity` (publisher Google) → *Install*. |
+| `Unrecognized function or variable 'carDesign'` in MATLAB | Make `AI_Grand_Prix` MATLAB's current folder and run `garage` once. |
+| No best model / no ghost | Run `practiceRace('Path', 'all')`: your first run that finishes a path is saved. `bestModel` shows it. |
 | Still stuck | Raise your hand and show the yellow `[!!]` lines. |
 
 ---
 
-## Trying the setup on a new machine (instructor)
+<details>
+<summary><b>🧑‍🏫 For the instructor: test the setup and rehearse race day</b> &nbsp;(click to open)</summary>
+
+<br>
+
+#### Try the setup on a new machine
 
 Use a machine (or a fresh Windows account) that has never run the workshop, so nothing is left over from earlier tests.
 
@@ -147,38 +208,76 @@ No admin rights, Docker, Git or Python are needed. The installer adds the Google
 (skip that with `$env:AIW_NO_EXTENSION = "1"` to test the manual step).
 
 1. **Install exactly as a student would** (section 1): download the ZIP, extract it into Documents, open a terminal in
-   `AI_Grand_Prix-main` and paste the one-line command. (Run in any other folder, it downloads the files itself.)
-   - To try a branch instead of `main`, first run `$env:AIW_REPO_BRANCH = "<branch>"`.
-   - To try a local copy of this repo instead of GitHub, first run `$env:AIW_LOCAL_WORKSHOP = "C:\path\to\AI-Workshop"`.
+   `AI_Grand_Prix-main` and paste the one-line command. A Git clone works the same way: open the terminal in the clone.
+   (Run in a folder without the workshop files, setup downloads them into `%USERPROFILE%\AI_Workshop`.)
+   - To try a branch instead of `main` (only when setup downloads the files itself), first run `$env:AIW_REPO_BRANCH = "<branch>"`.
+   - To try a local copy of this repo, first run `$env:AIW_LOCAL_WORKSHOP = "C:\path\to\the\copy"`.
    - More than one MATLAB? Choose one with `$env:AIW_MATLAB_ROOT = "C:\Program Files\MATLAB\R2026b"`.
 2. **Read the installer's summary.** Expect `ALL SET!`, a line `MATLAB via MCP works - baseline race ...`, a line
    `Google Antigravity extension installed` (or `already installed`), and no yellow `[!!]` lines.
-3. **Part 1 in VS Code:** open `AI_Grand_Prix-main\AI_Tools`, open the Antigravity panel and sign in; its MCP servers list shows
-   `matlab`, `google-scholar`, `scopus`, `markitdown`; the agent finds the skills (ask it: `Which skills do you have?`).
+3. **Part 1 in VS Code:** open the workshop folder's `AI_Tools`, open the Antigravity panel and sign in; its MCP servers list
+   shows `matlab`, `google-scholar`, `scopus`, `markitdown`; the agent finds the skills (ask it: `Which skills do you have?`).
    **Figure (PaperViz):** with a filled-in proposal, type `Run the research-figure skill` and check that the agent can generate
    an image itself (Antigravity's built-in image generation) and saves it in `5_proposal\figure\`.
-   **Still unverified:** that the VS Code extension reads the workspace `.agents\skills\` folder like the app does.
-4. **Part 2 in VS Code:** open `AI_Grand_Prix-main\AI_Grand_Prix`; the MCP servers list shows the same 4 servers; the agent lists
-   `race-debrief` and `car-design-review`. Then ask the agent:
+4. **Part 2 in VS Code:** open the workshop folder's `AI_Grand_Prix`; the MCP servers list shows the same 4 servers; the agent
+   lists `race-debrief` and `car-design-review`. Then ask the agent:
    ```
    Run testMCP, then garage, then practiceRace('Path', 'all') through MATLAB and report the results.
    ```
-   Expected: every check `[OK]`; the baseline finishes all four paths with no penalties
-   (about 22 s drag strip, 54 s technical, 278 s endurance, 64 s muddy road; overall ≈ 48), and the first run is saved
-   as the best model (`bestModel` shows it).
-5. **Graphics in MATLAB itself** (from `AI_Grand_Prix-main\AI_Grand_Prix`): `garage`, `practiceRace` (animated race view with HUD),
-   `practiceRace('Path', 'all')` (the fast replay of all four paths with the best-model ghost),
-   `r = practiceRace('Path', 'endurance', 'Headless', true); plotLap(r)`.
+   Expected: every check `[OK]`; the starting car finishes all four paths with no penalties (about 22 s drag strip,
+   54 s technical, 278 s endurance, 64 s muddy road; overall ≈ 48), and the run is saved as the first best model.
+5. **Graphics in MATLAB itself** (current folder: `AI_Grand_Prix`): `garage`; `practiceRace` (animated race view with the
+   HUD); `practiceRace('Path', 'all')` (the fast replay of all four paths; from the second run on, with the grey ghost);
+   `bestModel`; `r = practiceRace('Path', 'endurance', 'Headless', true); plotLap(r)`.
 6. **Agent loop:** `Run the race-debrief skill on the technical path.` It should run the race, write `lapPlot.png`, ask what
    you think limits the car, and only then give its own diagnosis and propose one change, without editing anything until
    you agree.
-7. **Clean up:** run `remove-keys.ps1`, or delete `AI_Grand_Prix-main` and the two desktop shortcuts.
+7. **Hand-in:** change `car.team` in `student\carDesign.m`, run `practiceRace('Path', 'all')` again (the same car under a new
+   name replaces the best model), then `submitCar`: it checks the best model, adds the log and names the file to send.
+8. **Clean up:** run `remove-keys.ps1`, or delete the workshop folder and the two desktop shortcuts.
 
-**Instructor tools** (race day, tests, balance) are not copied to students. Clone the repo for those:
-```powershell
-git clone https://github.com/Rasoolpey/AI_Grand_Prix.git
+#### Tests
+
+In MATLAB, from the workshop folder (the one with `README.md` in it):
+```matlab
+addpath('instructor/race/tests');  report = checkInstallation();
 ```
-then, in MATLAB from the repo root: `addpath('instructor/race/tests'); report = checkInstallation();` (tests, baseline races and
-figures). Race-day steps: `instructor/race/submissions/README.md`. Setup details and troubleshooting: `instructor/SETUP_NOTES.md`.
+Expected last line: `INSTALLATION_CHECK_PASSED: <release>, 25/25 tests, baseline score 48.16`. It does not touch your
+best model.
 
-Please note anything that fails (the yellow `[!!]` lines and the log folder `AI_Grand_Prix-main\.tools\log\`).
+#### Race day: `finalRace`
+
+Every team hands in its best model, `best_model\<team>.zip` (`submitCar`; or they send you the file). Put all the zips in
+one folder. In MATLAB, from the workshop folder:
+```matlab
+cd instructor/race
+addpath(pwd, fullfile(pwd, 'controllers'), fullfile(pwd, 'tests'));  setupPaths();
+finalRace('C:\path\to\the\folder with the models')
+```
+A **scrutineering** screen checks and drives every model, then come the four races (about 12 s each on screen, with a
+3-2-1 countdown and a live running order), each race's results, and the standings. **Press a key in the figure** to move
+on to the next scene. The names on screen come from `car.team` inside each model. Results are saved in
+`instructor\race\results\final_<date>_<time>\`.
+
+**The race-day layouts are private.** They are longer and busier than the practice paths and are **not in the repo** (it is
+public): they live in `instructor\race\finals\`, which git ignores. Copy that folder from the machine where you keep it,
+then build the race-day paths once with a secret number of your choice:
+```matlab
+makeFinals(<secret number>)
+```
+Without them (a fresh clone or ZIP), `finalRace` says **REHEARSAL** and races on the practice paths. Everything else is the same.
+
+**Rehearse with fake teams** (8 teams; one crashes on purpose and one is flagged by the code check and not raced):
+```matlab
+inbox = makeRehearsal(8, '', 'Hang', false);
+finalRace(inbox)
+```
+To put your own best model in the rehearsal, copy it in first:
+`copyfile(fullfile('..', '..', 'AI_Grand_Prix', 'best_model', '*.zip'), inbox)`.
+
+More: `instructor\race\submissions\README.md` (including the fully isolated pipeline, each team in its own MATLAB).
+Setup details and troubleshooting: `instructor\SETUP_NOTES.md`.
+
+Please note anything that fails (the yellow `[!!]` lines and the log folder `.tools\log\` in the workshop folder).
+
+</details>

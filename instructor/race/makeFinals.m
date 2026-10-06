@@ -25,6 +25,11 @@ function F = makeFinals(seed, varargin)
     here = fileparts(mfilename('fullpath'));
     finals = fullfile(here, 'finals');
     addpath(finals);
+    if exist(fullfile(finals, 'finalTemplates.m'), 'file') ~= 2
+        error('makeFinals:noTemplates', ['No private race-day layouts: %s is missing. It is git-ignored (the repo is ' ...
+            'public), so copy your finals folder here from where you keep it. To rehearse without it: ' ...
+            'finalRace(folder, ''Paths'', "practice").'], fullfile(finals, 'finalTemplates.m'));
+    end
     T = finalTemplates();
 
     target = struct('drag', [8 16], 'technical', [25 75], 'endurance', [90 190], 'mud', [25 75]);

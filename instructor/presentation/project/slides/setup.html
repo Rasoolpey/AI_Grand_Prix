@@ -10,17 +10,18 @@
 <ol style="font-size:28px;line-height:1.5">
 <li>In VS Code, add the Google Antigravity extension and sign in</li>
 <li>Get a Scopus key at dev.elsevier.com</li>
-<li>Download + extract the ZIP, open a terminal there, paste the command</li>
+<li>Download the ZIP, extract it into Documents, open a terminal in <span style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px">AI_Grand_Prix-main</span>, paste the command</li>
 <li>Wait for <b>ALL SET!</b> (1–3 min)</li>
 </ol>
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#E9E6DF;padding:32px;border-radius:16px;font-family:'JetBrains Mono', 'Courier New', monospace">
-<p style="font-size:26px;color:#13203A">AI_Workshop\</p>
+<p style="font-size:26px;color:#13203A">AI_Grand_Prix-main\</p>
 <p style="font-size:26px;color:#3E4A5C;padding:0 0 0 32px">README.md</p>
 <p style="font-size:26px;color:#3E4A5C;padding:0 0 0 32px">AI_Tools\       <span style="color:#1A6B62">Part 1 + your key</span></p>
 <p style="font-size:26px;color:#3E4A5C;padding:0 0 0 32px">AI_Grand_Prix\  <span style="color:#B8500F">Part 2</span></p>
+<p style="font-size:26px;color:#3E4A5C;padding:0 0 0 32px">remove-keys.ps1</p>
 </div>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7280">AI Workshop · Setup · no admin rights needed, nothing installed outside this folder</p>
-<aside>The script finds MATLAB, installs everything inside AI_Workshop (tools hide in a hidden .tools folder), connects the tools to the Antigravity extension per project folder, adds the extension to VS Code if it is missing (per user, no admin), then tests each tool and drives a baseline race in MATLAB through the agent's tool. Re-running it is safe. Anyone with yellow [!!] lines: hand up.</aside>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B7280">AI Workshop · Setup · no admin rights needed; the tools live inside this folder</p>
+<aside>The script finds MATLAB and installs everything inside the extracted folder, AI_Grand_Prix-main (the tools hide in a hidden .tools folder); it installs in whichever folder holds setup.ps1, AI_Tools and AI_Grand_Prix, so a Git clone works too. It registers the four MCP servers for the Antigravity extension (one global list, %USERPROFILE%\.gemini\config\mcp_config.json) and the skills per part folder, adds the extension to VS Code if it is missing (per user, no admin), puts two shortcuts on the desktop, then tests each tool and drives a baseline race in MATLAB through the agent's tool. Re-running it is safe. Anyone with yellow [!!] lines: hand up. After ALL SET, reload VS Code (Ctrl+Shift+P, Reload Window).</aside>
 </section>
