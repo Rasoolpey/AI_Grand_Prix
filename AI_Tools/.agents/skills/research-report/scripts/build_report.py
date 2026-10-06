@@ -571,8 +571,11 @@ def build():
     doc += [body_tex, "", r"\bibliographystyle{IEEEtran}", r"\bibliography{references}", "", r"\end{document}", ""]
 
     if OUT.exists():
-        shutil.rmtree(OUT)
-    (OUT / "figures").mkdir(parents=True)
+        try:
+            shutil.rmtree(OUT)
+        except OSError:
+            pass
+    (OUT / "figures").mkdir(parents=True, exist_ok=True)
     (OUT / "main.tex").write_text("\n".join(doc), encoding="utf-8")
     bib = [bib_entry(n, papers[n], cands.get((papers[n].get("doi") or "").lower().strip())) for n in inline.cited]
     (OUT / "references.bib").write_text("\n".join(bib), encoding="utf-8")
