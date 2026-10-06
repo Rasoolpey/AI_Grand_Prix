@@ -69,14 +69,17 @@ desktop: **AI Workshop - Part 1 AI Tools** and **AI Workshop - Part 2 Grand Prix
 
 Then type these in the agent panel, one at a time. Each result lands in a fixed, numbered folder:
 
-| Step | You type | Result appears in |
-|---|---|---|
-| 1 | `Run the research-question skill` | `1_topic\research_brief.md` |
-| 2 | `Run the literature-search skill` (Scopus, **Q1 journals** of IEEE and Elsevier only) | `2_search\papers.csv` (30–40 papers with links) |
-| 3 | *(you)* Download the PDFs you can, through the library | put them in `3_papers\pdf\` |
-| 4 | `Run the literature-review skill` (Docling turns the PDFs into text) | `4_review\` then `5_proposal\proposal.md` |
-| 5 | `Run the research-figure skill` (PaperViz, Google's figure method, draws the **Figure brief**; no key needed) | `5_proposal\figure\` |
-| 6 | `Run the research-report skill` (a short review paper in **IEEE format**, with your figure) | `6_report\report.md`, then double-click `6_report\open_in_overleaf.html` for the **PDF** (free Overleaf account) |
+| Step | You type | What runs | Result appears in |
+|---|---|---|---|
+| 1 | `Run the research-question skill` | skills *research-question* + *grilling*: up to 10 questions in the chat; no tools | `1_topic\research_brief.md` |
+| 2 | `Run the literature-search skill` (Scopus, **Q1 journals** of IEEE and Elsevier only) | script `scopus_q1.py` (Scopus API, Q1 filter); optional MCP `scopus` and `google-scholar` | `2_search\papers.csv` (30–40 papers with links) |
+| 3 | *(you)* Download the PDFs you can, through the library | you and your library login | put them in `3_papers\pdf\` |
+| 4 | `Run the literature-review skill` | script `pdf_to_text.py` (Docling turns the PDFs into text); MCP `scopus` for missing abstracts, `markitdown` as a fallback | `4_review\` then `5_proposal\proposal.md` |
+| 5 | `Run the research-figure skill` (PaperViz, Google's figure method, draws the **Figure brief**) | the agent's built-in image generation; no key needed | `5_proposal\figure\` |
+| 6 | `Run the research-report skill` (a short review paper in **IEEE format**, with your figure) | script `build_report.py` (LaTeX), then Overleaf on the web makes the PDF | `6_report\report.md`, then double-click `6_report\open_in_overleaf.html` for the **PDF** (free Overleaf account) |
+
+**See what is running:** the agent says which skill or tool it uses before it uses it, and every tool call and terminal
+command shows up in the agent panel (terminal commands may wait for your OK).
 
 Want the agent to work differently (shorter review, only recent papers, another language)? Write it in **`my_instructions.md`**:
 your rules override the defaults.
