@@ -14,9 +14,10 @@ function config = robotConfig()
     % Longer -> smoother but cuts corners; shorter -> sharper but can oscillate.
     config.lookaheadDistance = 3.0;
 
-    % Target speed (m/s).  The baseline drives at ONE speed everywhere.
-    % Faster is possible: the safe corner speed comes from equation 6.
-    config.targetSpeed = 7.0;
+    % Target speed (m/s).  The baseline drives at ONE speed everywhere:
+    % fast enough to slide wide in tight corners and in the mud.
+    % Better: slow down only where a corner needs it (equation 6).
+    config.targetSpeed = 11.0;
 
     % How hard to chase the target speed (throttle per m/s of error).
     config.throttleGain = 0.5;

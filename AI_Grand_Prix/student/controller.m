@@ -47,7 +47,7 @@ function command = controller(obs, config)
 % -------------------------------------------------------------------------
 
     lookahead   = getparam(config, 'lookaheadDistance', 3.0);
-    targetSpeed = getparam(config, 'targetSpeed',       7.0);
+    targetSpeed = getparam(config, 'targetSpeed',       11.0);
     kThrottle   = getparam(config, 'throttleGain',      0.5);
     stopDecel   = getparam(config, 'stopDecel',         4.0);
 

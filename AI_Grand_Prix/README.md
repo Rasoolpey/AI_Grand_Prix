@@ -182,7 +182,7 @@ The parts also **interact**. Whether 70 Wh is enough depends on your motor, gear
 controller drives. A part that's right for one car can be wrong for another.
 
 And the car is only half of it. The Garage estimates assume a near-perfect driver. The starting controller drives at one
-slow speed everywhere, so it uses only a fraction of what any car can do. **A better car only pays off if your controller
+speed everywhere (11 m/s): too fast for the hairpins and the mud, where it slides wide, and too slow on the straights. **A better car only pays off if your controller
 drives close to its limits.**
 
 **How to search:**

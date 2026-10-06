@@ -219,8 +219,9 @@ No admin rights, Docker, Git or Python are needed. The installer adds the Google
    ```
    Run testMCP, then garage, then practiceRace('Path', 'all') through MATLAB and report the results.
    ```
-   Expected: every check `[OK]`; the starting car finishes all four paths with no penalties (about 22 s drag strip,
-   54 s technical, 278 s endurance, 64 s muddy road; overall ≈ 48), and the run is saved as the first best model.
+   Expected: every check `[OK]`; the starting car finishes all four paths (about 15 s drag strip, 47 s technical, where
+   it slides off twice for +10 s, 180 s endurance, 42 s muddy road; overall ≈ 68), and the run is saved as the first best
+   model.
 5. **Graphics in MATLAB itself** (current folder: `AI_Grand_Prix`): `garage`; `practiceRace` (animated race view with the
    HUD); `practiceRace('Path', 'all')` (the fast replay of all four paths; from the second run on, with the grey ghost);
    `bestModel`; `r = practiceRace('Path', 'endurance', 'Headless', true); plotLap(r)`.
@@ -237,7 +238,7 @@ In MATLAB, from the workshop folder (the one with `README.md` in it):
 ```matlab
 addpath('instructor/race/tests');  report = checkInstallation();
 ```
-Expected last line: `INSTALLATION_CHECK_PASSED: <release>, 25/25 tests, baseline score 48.16`. It does not touch your
+Expected last line: `INSTALLATION_CHECK_PASSED: <release>, 25/25 tests, baseline score 68.00`. It does not touch your
 best model.
 
 #### Race day: `finalRace`
